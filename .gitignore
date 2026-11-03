@@ -41,3 +41,7 @@ Thumbs.db
 # Playwright
 playwright-report/
 test-results/
+.deepeval/
+.ruff_cache/
+.claude/settings.local.json
+__pycache__/
