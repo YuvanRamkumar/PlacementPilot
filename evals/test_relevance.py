@@ -1,12 +1,14 @@
 """
 Relevance eval: rewritten bullets must be relevant to the job description.
-Uses DeepEval GEval with the judge model.
-Pass threshold: average relevance score ≥ 0.7.
+The judge model scores each bullet 0–10.
+Pass threshold: average relevance ≥ 0.7.
 """
 from __future__ import annotations
 
+import json
 import os
-import pytest
+import re
+
 
 os.environ.setdefault("DEEPEVAL_TELEMETRY_OPT_OUT", "YES")
 
@@ -29,75 +31,30 @@ _BULLETS = {
 }
 
 
-def _make_deepeval_judge(judge_llm):
-    import json
-    import re
-
+def _judge_score(judge_llm, prompt: str) -> float:
+    """Call the judge LLM; parse a 0-10 integer and return as 0.0–1.0. Returns 0.0 on failure."""
+    full_prompt = (
+        prompt
+        + '\n\nRespond with JSON only, no other text: {"score": <integer 0-10>, "reason": "<one sentence>"}'
+    )
     try:
-        from deepeval.models.base_model import DeepEvalBaseLLM
-    except ImportError:
-        pytest.skip("deepeval not installed")
-
-    class GroqJudge(DeepEvalBaseLLM):
-        def __init__(self, client):
-            self._client = client
-
-        def load_model(self):
-            return self._client
-
-        def generate(self, prompt: str, schema=None):
-            actual_prompt = prompt if schema is None else prompt + "\n\nRespond with valid JSON only."
-            response = self._client.chat([{"role": "user", "content": actual_prompt}])
-            if schema is None:
-                return response
-            text = re.sub(r"^```(?:json)?\s*", "", response.strip(), flags=re.MULTILINE)
-            text = re.sub(r"```\s*$", "", text, flags=re.MULTILINE).strip()
-            try:
-                return schema(**json.loads(text))
-            except Exception:
-                match = re.search(r"\{.*\}", text, re.DOTALL)
-                if match:
-                    try:
-                        return schema(**json.loads(match.group()))
-                    except Exception:
-                        pass
-            return schema.model_construct()
-
-        async def a_generate(self, prompt: str, schema=None):
-            return self.generate(prompt, schema)
-
-        def get_model_name(self) -> str:
-            return self._client.model
-
-    return GroqJudge(judge_llm)
+        response = judge_llm.chat([{"role": "user", "content": full_prompt}])
+        text = re.sub(r"^```(?:json)?\s*", "", response.strip(), flags=re.MULTILINE)
+        text = re.sub(r"```\s*$", "", text, flags=re.MULTILINE).strip()
+        try:
+            return float(json.loads(text)["score"]) / 10.0
+        except Exception:
+            m = re.search(r'"score"\s*:\s*(10|[0-9])', text)
+            if m:
+                return float(m.group(1)) / 10.0
+    except Exception:
+        pass
+    return 0.0
 
 
 @requires_real_llm
 def test_suggestion_relevance(resume_texts, jd_texts, llm, judge_llm):
-    try:
-        from deepeval.metrics import GEval
-        from deepeval.test_case import LLMTestCase, SingleTurnParams
-    except ImportError:
-        pytest.skip("deepeval not installed")
-
     runner = EvalRunner("relevance", threshold=RELEVANCE_THRESHOLD)
-    deepeval_judge = _make_deepeval_judge(judge_llm)
-
-    relevance_metric = GEval(
-        name="Relevance",
-        criteria=(
-            "The 'actual output' (rewritten resume bullet) should address skills, "
-            "experience, or responsibilities described in the 'input' (job description). "
-            "A score of 1 means the bullet is highly relevant to the JD. "
-            "A score of 0 means it has no connection to the JD."
-        ),
-        evaluation_params=[
-            SingleTurnParams.INPUT,
-            SingleTurnParams.ACTUAL_OUTPUT,
-        ],
-        model=deepeval_judge,
-        threshold=RELEVANCE_THRESHOLD,
-    )
 
     for resume_id, jd_id in _PAIRS:
         resume_text = resume_texts.get(resume_id, "")
@@ -108,12 +65,14 @@ def test_suggestion_relevance(resume_texts, jd_texts, llm, judge_llm):
 
         try:
             rewritten = rewrite_bullet(resume_text, bullet, jd_text, llm)
-            test_case = LLMTestCase(
-                input=jd_text,
-                actual_output=rewritten.bullet,
+            prompt = (
+                f"Job description (excerpt):\n{jd_text[:2000]}\n\n"
+                f"Rewritten resume bullet:\n{rewritten.bullet}\n\n"
+                f"How relevant is this resume bullet to the job description? "
+                f"Score 10 = highly relevant (directly addresses a required skill or responsibility). "
+                f"Score 0 = completely irrelevant to the role."
             )
-            relevance_metric.measure(test_case)
-            score = relevance_metric.score
+            score = _judge_score(judge_llm, prompt)
             runner.add(
                 f"{resume_id}|{jd_id}",
                 passed=score >= RELEVANCE_THRESHOLD,
@@ -126,6 +85,7 @@ def test_suggestion_relevance(resume_texts, jd_texts, llm, judge_llm):
     result = runner.finish()
     EvalRunner.write_report({"relevance": result})
 
+    print(f"\nAverage relevance: {result.score:.3f}  (threshold ≥ {RELEVANCE_THRESHOLD})")
     assert result.score >= RELEVANCE_THRESHOLD, (
         f"Average relevance {result.score:.3f} below threshold {RELEVANCE_THRESHOLD}."
     )

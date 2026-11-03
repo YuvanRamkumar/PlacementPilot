@@ -1,12 +1,14 @@
 """
 Hallucination eval: rewritten bullets must not introduce facts absent from the resume.
-Uses DeepEval GEval with the judge (large) model as the LLM.
-Pass threshold: hallucination rate ≤ 5% (at most 1 in 20 bullets may hallucinate).
+The judge model (large LLM) scores each bullet 0–10; ≥5 = no hallucination.
+Pass threshold: hallucination rate ≤ 5%.
 """
 from __future__ import annotations
 
+import json
 import os
-import pytest
+import re
+
 
 os.environ.setdefault("DEEPEVAL_TELEMETRY_OPT_OUT", "YES")
 
@@ -16,14 +18,12 @@ from evals.runner import EvalRunner
 
 HALLUCINATION_THRESHOLD = 0.05  # ≤ 5% hallucination rate
 
-# Resume+JD pairs to test rewriting on.
 _PAIRS = [
     ("data_engineer", "data_engineer"),
     ("ml_student", "ai_quality_engineer"),
     ("web_developer", "backend_developer"),
 ]
 
-# Representative bullets to rewrite — chosen as the first substantive line.
 _BULLETS = {
     "data_engineer": "Built ETL pipelines in Python and Apache Spark processing 2 TB/day across 15 sources",
     "ml_student": "Built a prototype tool to assess LLM outputs using evaluation metrics",
@@ -31,78 +31,30 @@ _BULLETS = {
 }
 
 
-def _make_deepeval_judge(judge_llm):
-    """Wrap our LLMClient as a DeepEvalBaseLLM."""
-    import json
-    import re
-
+def _judge_score(judge_llm, prompt: str) -> float:
+    """Call the judge LLM; parse a 0-10 integer and return as 0.0–1.0. Returns 0.0 on failure."""
+    full_prompt = (
+        prompt
+        + '\n\nRespond with JSON only, no other text: {"score": <integer 0-10>, "reason": "<one sentence>"}'
+    )
     try:
-        from deepeval.models.base_model import DeepEvalBaseLLM
-    except ImportError:
-        pytest.skip("deepeval not installed")
-
-    class GroqJudge(DeepEvalBaseLLM):
-        def __init__(self, client):
-            self._client = client
-
-        def load_model(self):
-            return self._client
-
-        def generate(self, prompt: str, schema=None):
-            # When schema is provided, GEval expects a Pydantic instance back, not a string.
-            # Append an explicit JSON-only instruction so Groq returns parseable output.
-            actual_prompt = prompt if schema is None else prompt + "\n\nRespond with valid JSON only."
-            response = self._client.chat([{"role": "user", "content": actual_prompt}])
-            if schema is None:
-                return response
-            text = re.sub(r"^```(?:json)?\s*", "", response.strip(), flags=re.MULTILINE)
-            text = re.sub(r"```\s*$", "", text, flags=re.MULTILINE).strip()
-            try:
-                return schema(**json.loads(text))
-            except Exception:
-                match = re.search(r"\{.*\}", text, re.DOTALL)
-                if match:
-                    try:
-                        return schema(**json.loads(match.group()))
-                    except Exception:
-                        pass
-            return schema.model_construct()
-
-        async def a_generate(self, prompt: str, schema=None):
-            return self.generate(prompt, schema)
-
-        def get_model_name(self) -> str:
-            return self._client.model
-
-    return GroqJudge(judge_llm)
+        response = judge_llm.chat([{"role": "user", "content": full_prompt}])
+        text = re.sub(r"^```(?:json)?\s*", "", response.strip(), flags=re.MULTILINE)
+        text = re.sub(r"```\s*$", "", text, flags=re.MULTILINE).strip()
+        try:
+            return float(json.loads(text)["score"]) / 10.0
+        except Exception:
+            m = re.search(r'"score"\s*:\s*(10|[0-9])', text)
+            if m:
+                return float(m.group(1)) / 10.0
+    except Exception:
+        pass
+    return 0.0
 
 
 @requires_real_llm
 def test_hallucination_rate(resume_texts, jd_texts, llm, judge_llm):
-    try:
-        from deepeval.metrics import GEval
-        from deepeval.test_case import LLMTestCase, SingleTurnParams
-    except ImportError:
-        pytest.skip("deepeval not installed")
-
     runner = EvalRunner("hallucination", threshold=1.0 - HALLUCINATION_THRESHOLD)
-    deepeval_judge = _make_deepeval_judge(judge_llm)
-
-    hallucination_metric = GEval(
-        name="NoHallucination",
-        criteria=(
-            "The 'actual output' (rewritten resume bullet) must only contain facts, "
-            "skills, numbers, and claims that are explicitly present in the 'context' "
-            "(the original resume). A score of 1 means no hallucination. "
-            "A score of 0 means the output invented facts not in the resume."
-        ),
-        evaluation_params=[
-            SingleTurnParams.ACTUAL_OUTPUT,
-            SingleTurnParams.CONTEXT,
-        ],
-        model=deepeval_judge,
-        threshold=0.5,
-    )
 
     for resume_id, jd_id in _PAIRS:
         resume_text = resume_texts.get(resume_id, "")
@@ -113,13 +65,15 @@ def test_hallucination_rate(resume_texts, jd_texts, llm, judge_llm):
 
         try:
             rewritten = rewrite_bullet(resume_text, bullet, jd_text, llm)
-            test_case = LLMTestCase(
-                input=bullet,
-                actual_output=rewritten.bullet,
-                context=[resume_text],
+            prompt = (
+                f"Resume (ground truth):\n{resume_text[:3000]}\n\n"
+                f"Rewritten resume bullet:\n{rewritten.bullet}\n\n"
+                f"Does the rewritten bullet contain any fact, skill, number, or claim "
+                f"that is NOT present in the resume? "
+                f"Score 10 = no hallucination (every claim is in the resume). "
+                f"Score 0 = clear hallucination (invented facts not in the resume)."
             )
-            hallucination_metric.measure(test_case)
-            score = hallucination_metric.score  # 1.0 = no hallucination
+            score = _judge_score(judge_llm, prompt)
             runner.add(
                 f"{resume_id}|{jd_id}",
                 passed=score >= 0.5,
@@ -133,6 +87,7 @@ def test_hallucination_rate(resume_texts, jd_texts, llm, judge_llm):
     EvalRunner.write_report({"hallucination": result})
 
     hallucination_rate = 1.0 - result.score
+    print(f"\nHallucination rate: {hallucination_rate:.1%}  (threshold ≤ {HALLUCINATION_THRESHOLD:.0%})")
     assert hallucination_rate <= HALLUCINATION_THRESHOLD, (
         f"Hallucination rate {hallucination_rate:.1%} exceeds {HALLUCINATION_THRESHOLD:.1%} threshold."
     )
