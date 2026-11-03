@@ -1,12 +1,11 @@
 """Unit tests for app/llm.py — FakeLLM and cache logic."""
 import json
 import os
-import shutil
 import pytest
 
 os.environ["LLM_PROVIDER"] = "fake"
 
-from app.llm import FakeLLM, _cache_key, _load_cache, _save_cache, CACHE_DIR
+from app.llm import FakeLLM, _cache_key, _load_cache, _save_cache
 
 
 @pytest.fixture(autouse=True)

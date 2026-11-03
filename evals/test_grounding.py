@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import unicodedata
 
-import pytest
 from rapidfuzz import fuzz
 
 from app.analyzer import score_requirement

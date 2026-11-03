@@ -31,6 +31,9 @@ htmlcov/
 *.swp
 *.swo
 
+# Private / real personal data — never commit
+private_data/
+
 # OS
 .DS_Store
 Thumbs.db

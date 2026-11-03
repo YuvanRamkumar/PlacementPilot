@@ -1,37 +1,46 @@
 """
 Scoring accuracy eval: LLM label must agree with golden label on ≥ 80% of cases.
 
+Two scores are reported every run:
+  strict  — only exact label matches count (1.0); any mismatch = 0.
+  lenient — met↔partial confusion counts as half-correct (0.5); met↔missing = 0.
+
+The build gate uses the strict score (threshold 80%).
+
 Strategy: for each golden label, call score_requirement() directly (bypassing
 requirement extraction) so we test scoring logic in isolation.
 """
 from __future__ import annotations
 
-import pytest
 
 from app.analyzer import score_requirement
-from app.schemas import Requirement, RequirementType, ScoreLabel
+from app.schemas import Requirement, RequirementType
 from evals.conftest import requires_real_llm
-from evals.runner import EvalResult, EvalRunner
+from evals.runner import EvalRunner
 
 THRESHOLD = 0.80
-ADJACENT: dict[tuple, float] = {
-    (ScoreLabel.met, ScoreLabel.partial): 0.5,
-    (ScoreLabel.partial, ScoreLabel.met): 0.5,
-    (ScoreLabel.partial, ScoreLabel.missing): 0.5,
-    (ScoreLabel.missing, ScoreLabel.partial): 0.5,
-}
 
 
-def _agreement(predicted: str, golden: str) -> float:
-    """1.0 for exact match, 0.5 for adjacent labels, 0.0 otherwise."""
+def _strict(predicted: str, golden: str) -> float:
+    """1.0 for exact match, 0.0 for any mismatch."""
+    return 1.0 if predicted == golden else 0.0
+
+
+def _lenient(predicted: str, golden: str) -> float:
+    """1.0 exact, 0.5 for met↔partial confusion, 0.0 for met↔missing or partial↔missing."""
     if predicted == golden:
         return 1.0
-    return ADJACENT.get((ScoreLabel(predicted), ScoreLabel(golden)), 0.0)
+    if {predicted, golden} == {"met", "partial"}:
+        return 0.5
+    return 0.0
 
 
 @requires_real_llm
 def test_scoring_accuracy(labels, resume_texts, jd_texts, llm):
     runner = EvalRunner("accuracy", threshold=THRESHOLD)
+
+    strict_scores: list[float] = []
+    lenient_scores: list[float] = []
 
     for lbl in labels:
         resume_text = resume_texts.get(lbl["resume_id"], "")
@@ -46,15 +55,23 @@ def test_scoring_accuracy(labels, resume_texts, jd_texts, llm):
 
         try:
             scored = score_requirement(resume_text, req, llm)
-            agreement = _agreement(scored.label.value, lbl["golden_label"])
+            s = _strict(scored.label.value, lbl["golden_label"])
+            le = _lenient(scored.label.value, lbl["golden_label"])
+            strict_scores.append(s)
+            lenient_scores.append(le)
             case_name = f"{lbl['resume_id']}|{lbl['jd_id']}|{lbl['requirement_text'][:40]}"
             runner.add(
                 case_name,
-                passed=agreement >= 1.0,
-                score=agreement,
-                detail=f"predicted={scored.label.value} golden={lbl['golden_label']}",
+                passed=s >= 1.0,
+                score=s,
+                detail=(
+                    f"predicted={scored.label.value} golden={lbl['golden_label']} "
+                    f"strict={s:.1f} lenient={le:.1f}"
+                ),
             )
         except Exception as exc:
+            strict_scores.append(0.0)
+            lenient_scores.append(0.0)
             runner.add(
                 f"{lbl['resume_id']}|{lbl['jd_id']}|{lbl['requirement_text'][:40]}",
                 passed=False,
@@ -62,10 +79,19 @@ def test_scoring_accuracy(labels, resume_texts, jd_texts, llm):
                 detail=f"error: {exc}",
             )
 
+    n = len(strict_scores)
+    strict_agg = sum(strict_scores) / n if n else 0.0
+    lenient_agg = sum(lenient_scores) / n if n else 0.0
+
     result = runner.finish()
     EvalRunner.write_report({"accuracy": result})
 
-    assert result.score >= THRESHOLD, (
-        f"Accuracy {result.score:.1%} below threshold {THRESHOLD:.1%}. "
-        f"Passed {result.to_dict()['n_passed']}/{result.to_dict()['n_cases']} cases."
+    print(
+        f"\nAccuracy — strict: {strict_agg:.1%}  lenient: {lenient_agg:.1%}"
+        f"  (n={n}, threshold={THRESHOLD:.0%})"
+    )
+
+    assert strict_agg >= THRESHOLD, (
+        f"Strict accuracy {strict_agg:.1%} below threshold {THRESHOLD:.1%}. "
+        f"Lenient accuracy was {lenient_agg:.1%}."
     )

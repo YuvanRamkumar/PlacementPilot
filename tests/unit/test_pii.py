@@ -1,5 +1,4 @@
 """Unit tests for app/pii.py"""
-import pytest
 from app.pii import redact, restore
 
 

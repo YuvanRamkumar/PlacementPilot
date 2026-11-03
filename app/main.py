@@ -10,10 +10,8 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Optional
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.staticfiles import StaticFiles
 
 from app.analyzer import analyze, rewrite_bullet
@@ -102,7 +100,7 @@ def rewrite(req: RewriteRequest) -> RewrittenBullet:
         return rewrite_bullet(req.resume_text, req.bullet, req.resume_text, llm)
     except (InjectionDetectedError, OffTopicError) as exc:
         raise HTTPException(status_code=400, detail=str(exc))
-    except Exception as exc:
+    except Exception:
         raise HTTPException(status_code=500, detail="Rewrite failed.")
 
 
