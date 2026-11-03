@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PlacementPilot</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; }
+    header { background: #1a1d2e; border-bottom: 1px solid #2d3148; padding: 1rem 2rem; display: flex; align-items: center; gap: .75rem; }
+    header h1 { font-size: 1.4rem; font-weight: 700; color: #7c6af5; }
+    header span { font-size: .85rem; color: #64748b; }
+    main { max-width: 960px; margin: 2rem auto; padding: 0 1rem; display: grid; gap: 1.5rem; }
+
+    .card { background: #1a1d2e; border: 1px solid #2d3148; border-radius: 12px; padding: 1.5rem; }
+    .card h2 { font-size: 1rem; font-weight: 600; color: #a5b4fc; margin-bottom: 1rem; }
+
+    .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 600px) { .input-row { grid-template-columns: 1fr; } }
+
+    .field label { display: block; font-size: .8rem; color: #94a3b8; margin-bottom: .4rem; }
+    .field textarea { width: 100%; height: 160px; background: #0f1117; border: 1px solid #2d3148; color: #e2e8f0;
+      border-radius: 8px; padding: .75rem; font-size: .85rem; resize: vertical; }
+    .field textarea:focus { outline: none; border-color: #7c6af5; }
+
+    .tab-row { display: flex; gap: .5rem; margin-bottom: 1rem; }
+    .tab { background: transparent; border: 1px solid #2d3148; color: #94a3b8; padding: .35rem .9rem;
+      border-radius: 6px; cursor: pointer; font-size: .8rem; }
+    .tab.active { background: #7c6af5; border-color: #7c6af5; color: #fff; }
+
+    .file-input { display: none; }
+    .file-label { display: inline-block; background: #0f1117; border: 1px dashed #2d3148;
+      color: #94a3b8; padding: .6rem 1rem; border-radius: 8px; cursor: pointer; font-size: .85rem; width: 100%; text-align: center; }
+    .file-label:hover { border-color: #7c6af5; color: #7c6af5; }
+    .file-chosen { font-size: .75rem; color: #64748b; margin-top: .3rem; }
+
+    .btn { background: #7c6af5; color: #fff; border: none; padding: .7rem 1.8rem;
+      border-radius: 8px; cursor: pointer; font-size: .9rem; font-weight: 600; }
+    .btn:disabled { opacity: .5; cursor: default; }
+    .btn:not(:disabled):hover { background: #6b57f0; }
+    .btn-sm { padding: .4rem 1rem; font-size: .8rem; border-radius: 6px; }
+
+    #error-box { display: none; background: #3d1515; border: 1px solid #7f1d1d; color: #fca5a5;
+      border-radius: 8px; padding: .75rem 1rem; font-size: .85rem; }
+
+    /* Score badges */
+    .badge { display: inline-block; padding: .2rem .6rem; border-radius: 999px; font-size: .75rem; font-weight: 600; }
+    .badge-met { background: #14532d; color: #86efac; }
+    .badge-partial { background: #422006; color: #fdba74; }
+    .badge-missing { background: #3d1515; color: #fca5a5; }
+    .badge-must { background: #1e1b4b; color: #a5b4fc; }
+    .badge-nice { background: #1c1917; color: #a8a29e; }
+    .badge-resp { background: #1e3a4a; color: #7dd3fc; }
+
+    /* Stats row */
+    .stats { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .stat { text-align: center; }
+    .stat .val { font-size: 2rem; font-weight: 700; color: #7c6af5; }
+    .stat .lbl { font-size: .75rem; color: #64748b; }
+
+    /* Requirements table */
+    table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    th { text-align: left; padding: .5rem .75rem; color: #64748b; font-weight: 500; border-bottom: 1px solid #2d3148; }
+    td { padding: .6rem .75rem; border-bottom: 1px solid #1a1d2e; vertical-align: top; }
+    tr:hover td { background: #1e2235; }
+    .evidence { font-size: .78rem; color: #94a3b8; font-style: italic; margin-top: .2rem; }
+
+    /* Suggestions */
+    .suggestion { background: #0f1117; border: 1px solid #2d3148; border-radius: 8px; padding: 1rem; margin-bottom: .75rem; }
+    .suggestion .orig { font-size: .8rem; color: #64748b; margin-bottom: .5rem; }
+    .suggestion .new { color: #e2e8f0; }
+
+    /* Chat */
+    #chat-box { height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: .5rem;
+      padding: .5rem; background: #0f1117; border: 1px solid #2d3148; border-radius: 8px; margin-bottom: .75rem; }
+    .msg { max-width: 80%; padding: .6rem .9rem; border-radius: 10px; font-size: .85rem; line-height: 1.5; }
+    .msg.user { align-self: flex-end; background: #7c6af5; color: #fff; }
+    .msg.assistant { align-self: flex-start; background: #1a1d2e; color: #e2e8f0; border: 1px solid #2d3148; }
+    .chat-input-row { display: flex; gap: .5rem; }
+    #chat-input { flex: 1; background: #0f1117; border: 1px solid #2d3148; color: #e2e8f0;
+      border-radius: 8px; padding: .6rem .9rem; font-size: .85rem; }
+    #chat-input:focus { outline: none; border-color: #7c6af5; }
+
+    #results { display: none; }
+    .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid #fff3;
+      border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: .5rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<header>
+  <h1>PlacementPilot</h1>
+  <span>Resume × JD Analyser</span>
+</header>
+<main>
+
+  <!-- Input card -->
+  <div class="card">
+    <h2>Upload or paste your resume & job description</h2>
+    <div class="tab-row">
+      <button class="tab active" id="tab-paste" onclick="switchTab('paste')">Paste text</button>
+      <button class="tab" id="tab-file" onclick="switchTab('file')">Upload files</button>
+    </div>
+
+    <!-- Paste mode -->
+    <div id="mode-paste">
+      <div class="input-row">
+        <div class="field">
+          <label>Resume</label>
+          <textarea id="resume-text" placeholder="Paste your resume here…"></textarea>
+        </div>
+        <div class="field">
+          <label>Job Description</label>
+          <textarea id="jd-text" placeholder="Paste the job description here…"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- File mode -->
+    <div id="mode-file" style="display:none">
+      <div class="input-row">
+        <div class="field">
+          <label>Resume (PDF / DOCX / PPTX / TXT)</label>
+          <label class="file-label" for="resume-file">Choose file…</label>
+          <input class="file-input" type="file" id="resume-file" accept=".pdf,.docx,.pptx,.txt"
+            onchange="document.getElementById('resume-file-name').textContent = this.files[0]?.name || ''" />
+          <div class="file-chosen" id="resume-file-name">No file chosen</div>
+        </div>
+        <div class="field">
+          <label>Job Description (PDF / DOCX / TXT)</label>
+          <label class="file-label" for="jd-file">Choose file…</label>
+          <input class="file-input" type="file" id="jd-file" accept=".pdf,.docx,.pptx,.txt"
+            onchange="document.getElementById('jd-file-name').textContent = this.files[0]?.name || ''" />
+          <div class="file-chosen" id="jd-file-name">No file chosen</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:1rem; display:flex; gap:.75rem; align-items:center;">
+      <button class="btn" id="analyze-btn" onclick="runAnalysis()">Analyse</button>
+      <span id="analyze-status" style="font-size:.85rem; color:#64748b;"></span>
+    </div>
+    <div id="error-box" style="margin-top:.75rem;"></div>
+  </div>
+
+  <!-- Results -->
+  <div id="results">
+
+    <!-- Stats -->
+    <div class="card">
+      <h2>Match Summary</h2>
+      <div class="stats">
+        <div class="stat"><div class="val" id="stat-match">—</div><div class="lbl">Must-have match %</div></div>
+        <div class="stat"><div class="val" id="stat-kw">—</div><div class="lbl">Keyword coverage %</div></div>
+        <div class="stat"><div class="val" id="stat-met">—</div><div class="lbl">Met</div></div>
+        <div class="stat"><div class="val" id="stat-partial">—</div><div class="lbl">Partial</div></div>
+        <div class="stat"><div class="val" id="stat-missing">—</div><div class="lbl">Missing</div></div>
+      </div>
+    </div>
+
+    <!-- Requirements table -->
+    <div class="card">
+      <h2>Requirement Breakdown</h2>
+      <table>
+        <thead><tr><th>Requirement</th><th>Type</th><th>Score</th></tr></thead>
+        <tbody id="req-table"></tbody>
+      </table>
+    </div>
+
+    <!-- Suggestions -->
+    <div class="card" id="suggestions-card" style="display:none">
+      <h2>Suggested Resume Improvements</h2>
+      <div id="suggestions-list"></div>
+    </div>
+
+    <!-- Chat -->
+    <div class="card">
+      <h2>Follow-up Chat</h2>
+      <div id="chat-box"></div>
+      <div class="chat-input-row">
+        <input type="text" id="chat-input" placeholder="Ask a follow-up question…" onkeydown="if(event.key==='Enter')sendChat()" />
+        <button class="btn btn-sm" onclick="sendChat()">Send</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  let currentMode = 'paste';
+  let analysisResult = null;
+  let chatHistory = [];
+
+  function switchTab(mode) {
+    currentMode = mode;
+    document.getElementById('mode-paste').style.display = mode === 'paste' ? '' : 'none';
+    document.getElementById('mode-file').style.display = mode === 'file' ? '' : 'none';
+    document.getElementById('tab-paste').classList.toggle('active', mode === 'paste');
+    document.getElementById('tab-file').classList.toggle('active', mode === 'file');
+  }
+
+  function showError(msg) {
+    const box = document.getElementById('error-box');
+    box.textContent = msg;
+    box.style.display = 'block';
+  }
+
+  function clearError() {
+    document.getElementById('error-box').style.display = 'none';
+  }
+
+  async function runAnalysis() {
+    clearError();
+    const btn = document.getElementById('analyze-btn');
+    const status = document.getElementById('analyze-status');
+    btn.disabled = true;
+    status.innerHTML = '<span class="spinner"></span>Analysing…';
+
+    try {
+      let result;
+      if (currentMode === 'paste') {
+        const resumeText = document.getElementById('resume-text').value.trim();
+        const jdText = document.getElementById('jd-text').value.trim();
+        if (!resumeText || !jdText) { showError('Please paste both the resume and job description.'); return; }
+        const resp = await fetch('/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ resume_text: resumeText, jd_text: jdText }),
+        });
+        if (!resp.ok) { const e = await resp.json(); showError(e.detail || 'Analysis failed.'); return; }
+        result = await resp.json();
+      } else {
+        const resumeFile = document.getElementById('resume-file').files[0];
+        const jdFile = document.getElementById('jd-file').files[0];
+        if (!resumeFile || !jdFile) { showError('Please choose both files.'); return; }
+        const fd = new FormData();
+        fd.append('resume', resumeFile);
+        fd.append('jd', jdFile);
+        const resp = await fetch('/analyze/upload', { method: 'POST', body: fd });
+        if (!resp.ok) { const e = await resp.json(); showError(e.detail || 'Analysis failed.'); return; }
+        result = await resp.json();
+      }
+      analysisResult = result;
+      chatHistory = [];
+      renderResults(result);
+    } catch(err) {
+      showError('Network error: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      status.textContent = '';
+    }
+  }
+
+  function typeBadge(type) {
+    const map = { must_have: ['badge-must','Must-have'], nice_to_have: ['badge-nice','Nice-to-have'], responsibility: ['badge-resp','Responsibility'] };
+    const [cls, label] = map[type] || ['',''];
+    return `<span class="badge ${cls}">${label}</span>`;
+  }
+
+  function scoreBadge(label) {
+    const map = { met: 'badge-met', partial: 'badge-partial', missing: 'badge-missing' };
+    return `<span class="badge ${map[label] || ''}">${label}</span>`;
+  }
+
+  function renderResults(r) {
+    document.getElementById('results').style.display = '';
+    document.getElementById('stat-match').textContent = r.match_pct.toFixed(1) + '%';
+    document.getElementById('stat-kw').textContent = r.keyword_coverage_pct.toFixed(1) + '%';
+
+    const met = r.scores.filter(s => s.label === 'met').length;
+    const partial = r.scores.filter(s => s.label === 'partial').length;
+    const missing = r.scores.filter(s => s.label === 'missing').length;
+    document.getElementById('stat-met').textContent = met;
+    document.getElementById('stat-partial').textContent = partial;
+    document.getElementById('stat-missing').textContent = missing;
+
+    const scoreMap = {};
+    r.scores.forEach(s => scoreMap[s.requirement_id] = s);
+    const tbody = document.getElementById('req-table');
+    tbody.innerHTML = '';
+    r.requirements.forEach(req => {
+      const s = scoreMap[req.id] || {};
+      const evHtml = s.evidence ? `<div class="evidence">"${s.evidence}"</div>` : '';
+      tbody.insertAdjacentHTML('beforeend', `
+        <tr>
+          <td>${req.text}${evHtml}</td>
+          <td>${typeBadge(req.type)}</td>
+          <td>${scoreBadge(s.label || 'missing')}</td>
+        </tr>`);
+    });
+
+    const suggCard = document.getElementById('suggestions-card');
+    const suggList = document.getElementById('suggestions-list');
+    if (r.suggestions && r.suggestions.length) {
+      suggList.innerHTML = '';
+      r.suggestions.forEach(s => {
+        suggList.insertAdjacentHTML('beforeend', `
+          <div class="suggestion">
+            <div class="orig">Original: ${s.original}</div>
+            <div class="new">${s.bullet}</div>
+          </div>`);
+      });
+      suggCard.style.display = '';
+    } else {
+      suggCard.style.display = 'none';
+    }
+
+    document.getElementById('chat-box').innerHTML = '';
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  async function sendChat() {
+    const input = document.getElementById('chat-input');
+    const msg = input.value.trim();
+    if (!msg) return;
+    input.value = '';
+
+    appendMsg('user', msg);
+    chatHistory.push({ role: 'user', content: msg });
+
+    const payload = {
+      message: msg,
+      history: chatHistory.slice(0, -1),
+      resume_text: document.getElementById('resume-text').value || undefined,
+      jd_text: document.getElementById('jd-text').value || undefined,
+    };
+
+    try {
+      const resp = await fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await resp.json();
+      const reply = resp.ok ? data.reply : (data.detail || 'Error from server.');
+      appendMsg('assistant', reply);
+      chatHistory.push({ role: 'assistant', content: reply });
+    } catch(err) {
+      appendMsg('assistant', 'Network error: ' + err.message);
+    }
+  }
+
+  function appendMsg(role, text) {
+    const box = document.getElementById('chat-box');
+    const div = document.createElement('div');
+    div.className = 'msg ' + role;
+    div.textContent = text;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+  }
+</script>
+</body>
+</html>

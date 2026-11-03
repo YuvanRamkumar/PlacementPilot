@@ -42,8 +42,8 @@ def test_fake_llm_rewrite():
 def test_fake_llm_chat_default():
     llm = FakeLLM()
     result = llm.chat([{"role": "user", "content": "What skills should I add?"}])
-    parsed = json.loads(result)
-    assert "reply" in parsed
+    # Chat default returns plain text (not JSON); endpoint handles both.
+    assert isinstance(result, str) and len(result) > 0
 
 
 def test_cache_key_is_deterministic():

@@ -44,8 +44,9 @@ class FakeLLM:
 
     def chat(self, messages: list[dict], model: str = "fake", **_: Any) -> str:
         # Return minimal valid JSON that satisfies every schema the app expects.
-        last = messages[-1]["content"] if messages else ""
-        if "extract" in last.lower() or "requirements" in last.lower():
+        # Check all message contents so the system prompt can drive dispatch.
+        all_content = " ".join(m.get("content", "") for m in messages).lower()
+        if "extract" in all_content or "requirements" in all_content:
             return json.dumps([
                 {
                     "id": "req_1",
@@ -53,16 +54,16 @@ class FakeLLM:
                     "type": "must_have",
                 }
             ])
-        if "score" in last.lower():
+        if "score" in all_content or "screener" in all_content:
             return json.dumps({
                 "label": "met",
                 "evidence": "Python experience",
                 "confidence": 0.9,
             })
-        if "rewrite" in last.lower():
+        if "rewrite" in all_content or "writing coach" in all_content:
             return json.dumps({"bullet": "Developed Python pipelines processing 1M rows/day."})
-        # Default: echo a safe placeholder for chat
-        return json.dumps({"reply": "I can help you improve your resume."})
+        # Default: plain-text chat reply
+        return "I can help you improve your resume."
 
 
 class LLMClient:
