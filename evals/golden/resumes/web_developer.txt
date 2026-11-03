@@ -1,0 +1,23 @@
+Sam Rivera
+Full-Stack Web Developer
+sam.rivera@fakeemail.example | 555-456-7890
+
+SKILLS
+JavaScript, TypeScript, React, Node.js, PostgreSQL, REST APIs, Docker, Git, Jest
+
+EXPERIENCE
+
+Software Engineer — WebTech Solutions, 2021–2024 (3 years)
+- Built and maintained REST APIs using Node.js and TypeScript serving 50,000+ monthly active users
+- Designed PostgreSQL database schemas for multi-tenant SaaS platform
+- Containerised all services using Docker and docker-compose, reducing onboarding time by 60%
+- Led migration from JavaScript to TypeScript across the backend codebase
+- Participated in code reviews and wrote technical documentation
+
+Junior Developer — StartupXYZ, 2020–2021
+- Developed React frontend components and integrated with third-party REST APIs
+- Wrote integration tests with Jest; maintained 80% code coverage
+- Fixed critical bugs in Node.js payment processing service
+
+EDUCATION
+B.Sc. Software Engineering — City College, 2020

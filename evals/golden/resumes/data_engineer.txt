@@ -1,0 +1,26 @@
+Jordan Lee
+Data Engineer
+jordan.lee@fakeemail.example | 555-234-5678
+
+SKILLS
+Python (4 years), Apache Spark, SQL, Airflow, AWS S3, dbt, Kafka, PostgreSQL, Redshift
+
+EXPERIENCE
+
+Senior Data Engineer — DataCo Inc, 2021–2024
+- Built ETL pipelines in Python and Apache Spark processing 2 TB/day across 15 sources
+- Designed dbt models for analytics warehouse, reducing reporting latency by 35%
+- Managed Kafka streams for real-time event processing across microservices
+- Deployed and maintained data infrastructure on AWS S3, Glue, and Redshift
+- Mentored two junior engineers on SQL best practices and pipeline design
+
+Data Engineer — Analytics LLC, 2020–2021
+- Wrote complex SQL queries and data models for business intelligence dashboards
+- Migrated on-premises ETL workflows to AWS cloud environment
+- Reduced pipeline failure rate by 40% through improved error handling and monitoring
+
+EDUCATION
+B.Sc. Computer Science — State University, 2020
+
+CERTIFICATIONS
+AWS Certified Data Analytics – Specialty, 2022

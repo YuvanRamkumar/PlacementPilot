@@ -1,0 +1,27 @@
+{
+  "chat_id": "chat_04",
+  "description": "Data engineer asks about their strongest points for the role",
+  "resume_id": "data_engineer",
+  "jd_id": "ai_quality_engineer",
+  "turns": [
+    {
+      "role": "user",
+      "content": "What are my strongest points for this AI Quality Engineer role?"
+    },
+    {
+      "expected_topics": ["Python"],
+      "must_acknowledge_gaps": ["testing frameworks", "LLM evaluation"],
+      "must_not_invent": true,
+      "must_stay_on_topic": true
+    },
+    {
+      "role": "user",
+      "content": "How much of a gap do I have compared to the requirements?"
+    },
+    {
+      "expected_topics": ["missing", "testing", "LLM"],
+      "must_not_invent": true,
+      "must_stay_on_topic": true
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "chat_id": "chat_03",
+  "description": "Web developer asks to make bullets more specific and quantified",
+  "resume_id": "web_developer",
+  "jd_id": "backend_developer",
+  "turns": [
+    {
+      "role": "user",
+      "content": "Can you make my resume bullets more specific and add quantifiable impact?"
+    },
+    {
+      "expected_topics": ["REST APIs", "Node.js", "TypeScript", "50,000"],
+      "must_not_invent": true,
+      "must_stay_on_topic": true,
+      "must_only_use_resume_facts": true
+    },
+    {
+      "role": "user",
+      "content": "What about the PostgreSQL experience bullet?"
+    },
+    {
+      "expected_topics": ["PostgreSQL", "database", "schema"],
+      "must_not_invent": true,
+      "must_stay_on_topic": true
+    }
+  ]
+}

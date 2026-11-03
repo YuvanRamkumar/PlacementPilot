@@ -1,0 +1,53 @@
+{
+  "version": "v1",
+  "description": "Hand-labelled golden set for accuracy and grounding evals",
+  "labels": [
+    {"resume_id": "data_engineer", "jd_id": "data_engineer", "requirement_text": "Python programming (3+ years)", "requirement_type": "must_have", "golden_label": "met", "golden_evidence": "Python (4 years)"},
+    {"resume_id": "data_engineer", "jd_id": "data_engineer", "requirement_text": "SQL and data modeling experience", "requirement_type": "must_have", "golden_label": "met", "golden_evidence": "SQL"},
+    {"resume_id": "data_engineer", "jd_id": "data_engineer", "requirement_text": "Cloud platform experience (AWS or GCP)", "requirement_type": "must_have", "golden_label": "met", "golden_evidence": "AWS S3"},
+    {"resume_id": "data_engineer", "jd_id": "data_engineer", "requirement_text": "ETL pipeline development", "requirement_type": "must_have", "golden_label": "met", "golden_evidence": "Built ETL pipelines"},
+    {"resume_id": "data_engineer", "jd_id": "data_engineer", "requirement_text": "2+ years professional data engineering experience", "requirement_type": "must_have", "golden_label": "met", "golden_evidence": "Senior Data Engineer — DataCo Inc, 2021–2024"},
+    {"resume_id": "data_engineer", "jd_id": "data_engineer", "requirement_text": "Apache Spark or Flink experience", "requirement_type": "nice_to_have", "golden_label": "met", "golden_evidence": "Apache Spark"},
+    {"resume_id": "data_engineer", "jd_id": "data_engineer", "requirement_text": "dbt (data build tool) experience", "requirement_type": "nice_to_have", "golden_label": "met", "golden_evidence": "dbt models for analytics warehouse"},
+    {"resume_id": "data_engineer", "jd_id": "data_engineer", "requirement_text": "Kafka or similar message queue experience", "requirement_type": "nice_to_have", "golden_label": "met", "golden_evidence": "Kafka streams"},
+    {"resume_id": "data_engineer", "jd_id": "data_engineer", "requirement_text": "Build and maintain scalable data pipelines", "requirement_type": "responsibility", "golden_label": "met", "golden_evidence": "Built ETL pipelines in Python and Apache Spark"},
+    {"resume_id": "data_engineer", "jd_id": "data_engineer", "requirement_text": "Design data warehouse schemas", "requirement_type": "responsibility", "golden_label": "partial", "golden_evidence": "Designed dbt models for analytics warehouse"},
+
+    {"resume_id": "data_engineer", "jd_id": "ai_quality_engineer", "requirement_text": "Python programming (3+ years)", "requirement_type": "must_have", "golden_label": "met", "golden_evidence": "Python (4 years)"},
+    {"resume_id": "data_engineer", "jd_id": "ai_quality_engineer", "requirement_text": "Experience with testing frameworks (pytest, unittest)", "requirement_type": "must_have", "golden_label": "missing", "golden_evidence": null},
+    {"resume_id": "data_engineer", "jd_id": "ai_quality_engineer", "requirement_text": "Experience evaluating LLM outputs for quality (hallucination, accuracy, relevance)", "requirement_type": "must_have", "golden_label": "missing", "golden_evidence": null},
+    {"resume_id": "data_engineer", "jd_id": "ai_quality_engineer", "requirement_text": "Writing test cases for ML/AI systems", "requirement_type": "must_have", "golden_label": "missing", "golden_evidence": null},
+    {"resume_id": "data_engineer", "jd_id": "ai_quality_engineer", "requirement_text": "Familiarity with evaluation metrics", "requirement_type": "must_have", "golden_label": "missing", "golden_evidence": null},
+    {"resume_id": "data_engineer", "jd_id": "ai_quality_engineer", "requirement_text": "DeepEval, promptfoo, or similar eval frameworks", "requirement_type": "nice_to_have", "golden_label": "missing", "golden_evidence": null},
+    {"resume_id": "data_engineer", "jd_id": "ai_quality_engineer", "requirement_text": "Experience with Groq, OpenAI, or other LLM APIs", "requirement_type": "nice_to_have", "golden_label": "missing", "golden_evidence": null},
+    {"resume_id": "data_engineer", "jd_id": "ai_quality_engineer", "requirement_text": "CI/CD knowledge (GitHub Actions)", "requirement_type": "nice_to_have", "golden_label": "missing", "golden_evidence": null},
+
+    {"resume_id": "ml_student", "jd_id": "ai_quality_engineer", "requirement_text": "Python programming (3+ years)", "requirement_type": "must_have", "golden_label": "partial", "golden_evidence": "Python"},
+    {"resume_id": "ml_student", "jd_id": "ai_quality_engineer", "requirement_text": "Experience with testing frameworks (pytest, unittest)", "requirement_type": "must_have", "golden_label": "partial", "golden_evidence": "Implemented test cases for ML model validation using pytest"},
+    {"resume_id": "ml_student", "jd_id": "ai_quality_engineer", "requirement_text": "Experience evaluating LLM outputs for quality (hallucination, accuracy, relevance)", "requirement_type": "must_have", "golden_label": "partial", "golden_evidence": "Built a prototype tool to assess LLM outputs"},
+    {"resume_id": "ml_student", "jd_id": "ai_quality_engineer", "requirement_text": "Writing test cases for ML/AI systems", "requirement_type": "must_have", "golden_label": "partial", "golden_evidence": "Implemented test cases for ML model validation"},
+    {"resume_id": "ml_student", "jd_id": "ai_quality_engineer", "requirement_text": "Familiarity with evaluation metrics", "requirement_type": "must_have", "golden_label": "met", "golden_evidence": "evaluation metrics (accuracy, faithfulness, relevance)"},
+    {"resume_id": "ml_student", "jd_id": "ai_quality_engineer", "requirement_text": "DeepEval, promptfoo, or similar eval frameworks", "requirement_type": "nice_to_have", "golden_label": "missing", "golden_evidence": null},
+    {"resume_id": "ml_student", "jd_id": "ai_quality_engineer", "requirement_text": "Experience with Groq, OpenAI, or other LLM APIs", "requirement_type": "nice_to_have", "golden_label": "partial", "golden_evidence": "OpenAI API"},
+    {"resume_id": "ml_student", "jd_id": "ai_quality_engineer", "requirement_text": "CI/CD knowledge (GitHub Actions)", "requirement_type": "nice_to_have", "golden_label": "missing", "golden_evidence": null},
+
+    {"resume_id": "web_developer", "jd_id": "backend_developer", "requirement_text": "Node.js or Python backend development (2+ years)", "requirement_type": "must_have", "golden_label": "met", "golden_evidence": "Node.js and TypeScript"},
+    {"resume_id": "web_developer", "jd_id": "backend_developer", "requirement_text": "RESTful API design and implementation", "requirement_type": "must_have", "golden_label": "met", "golden_evidence": "Built and maintained REST APIs"},
+    {"resume_id": "web_developer", "jd_id": "backend_developer", "requirement_text": "PostgreSQL or MySQL database experience", "requirement_type": "must_have", "golden_label": "met", "golden_evidence": "Designed PostgreSQL database schemas"},
+    {"resume_id": "web_developer", "jd_id": "backend_developer", "requirement_text": "2+ years professional software engineering experience", "requirement_type": "must_have", "golden_label": "met", "golden_evidence": "WebTech Solutions, 2021–2024 (3 years)"},
+    {"resume_id": "web_developer", "jd_id": "backend_developer", "requirement_text": "TypeScript experience", "requirement_type": "nice_to_have", "golden_label": "met", "golden_evidence": "TypeScript"},
+    {"resume_id": "web_developer", "jd_id": "backend_developer", "requirement_text": "Redis for caching", "requirement_type": "nice_to_have", "golden_label": "missing", "golden_evidence": null},
+    {"resume_id": "web_developer", "jd_id": "backend_developer", "requirement_text": "Docker/containerization", "requirement_type": "nice_to_have", "golden_label": "met", "golden_evidence": "Containerised all services using Docker"},
+    {"resume_id": "web_developer", "jd_id": "backend_developer", "requirement_text": "Build and maintain server-side APIs", "requirement_type": "responsibility", "golden_label": "met", "golden_evidence": "Built and maintained REST APIs using Node.js"},
+    {"resume_id": "web_developer", "jd_id": "backend_developer", "requirement_text": "Design database schemas", "requirement_type": "responsibility", "golden_label": "met", "golden_evidence": "Designed PostgreSQL database schemas"},
+
+    {"resume_id": "web_developer", "jd_id": "data_engineer", "requirement_text": "Python programming (3+ years)", "requirement_type": "must_have", "golden_label": "missing", "golden_evidence": null},
+    {"resume_id": "web_developer", "jd_id": "data_engineer", "requirement_text": "SQL and data modeling experience", "requirement_type": "must_have", "golden_label": "partial", "golden_evidence": "Designed PostgreSQL database schemas"},
+    {"resume_id": "web_developer", "jd_id": "data_engineer", "requirement_text": "Cloud platform experience (AWS or GCP)", "requirement_type": "must_have", "golden_label": "missing", "golden_evidence": null},
+    {"resume_id": "web_developer", "jd_id": "data_engineer", "requirement_text": "ETL pipeline development", "requirement_type": "must_have", "golden_label": "missing", "golden_evidence": null},
+    {"resume_id": "web_developer", "jd_id": "data_engineer", "requirement_text": "2+ years professional data engineering experience", "requirement_type": "must_have", "golden_label": "missing", "golden_evidence": null},
+    {"resume_id": "web_developer", "jd_id": "data_engineer", "requirement_text": "Apache Spark or Flink experience", "requirement_type": "nice_to_have", "golden_label": "missing", "golden_evidence": null},
+    {"resume_id": "web_developer", "jd_id": "data_engineer", "requirement_text": "dbt (data build tool) experience", "requirement_type": "nice_to_have", "golden_label": "missing", "golden_evidence": null},
+    {"resume_id": "web_developer", "jd_id": "data_engineer", "requirement_text": "Kafka or similar message queue experience", "requirement_type": "nice_to_have", "golden_label": "missing", "golden_evidence": null}
+  ]
+}

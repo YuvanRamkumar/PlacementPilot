@@ -16,18 +16,21 @@ import re
 # Patterns that strongly indicate prompt-injection attempts inside documents.
 _INJECTION_PATTERNS = [
     re.compile(r"ignore\s+(all\s+)?(previous|prior|above)\s+instructions?", re.I),
-    re.compile(r"disregard\s+(all\s+)?(previous|prior|above)\s+instructions?", re.I),
+    re.compile(r"disregard\s+(all\s+)?(previous|prior|above)\s+(instructions?|results?|output)", re.I),
     re.compile(r"forget\s+(everything|all)\s+(you|i)", re.I),
     re.compile(r"you\s+are\s+now\s+(a\s+)?(different|new)\s+(ai|assistant|model)", re.I),
     re.compile(r"score\s+(this\s+resume\s+)?100\s*%", re.I),
     re.compile(r"print\s+(your\s+)?(system\s+)?prompt", re.I),
     re.compile(r"reveal\s+(your\s+)?(system\s+)?instructions?", re.I),
     re.compile(r"(do\s+)?jailbreak", re.I),
+    # Hidden system-override markers sometimes embedded in documents.
+    re.compile(r"\[SYSTEM\s*:", re.I),
+    re.compile(r"set\s+(the\s+)?(final\s+)?match_pct\s+to\s+100", re.I),
 ]
 
 # Very broad off-topic / harmful topics — only obvious cases.
 _OFFTOPIC_PATTERNS = [
-    re.compile(r"\b(how\s+to\s+(make|build|create)\s+(a\s+)?(bomb|weapon|malware|virus))\b", re.I),
+    re.compile(r"\bhow\s+(to|do\s+i|can\s+i)\s+(make|build|create)\s+(a\s+)?(bomb|weapon|malware|virus)\b", re.I),
     re.compile(r"\b(suicide|self[\s\-]harm)\b", re.I),
 ]
 

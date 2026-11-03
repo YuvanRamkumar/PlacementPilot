@@ -1,0 +1,7 @@
+Dana White — Software Engineer
+Contact: dana.white@fakeemail.example | 555-987-6543
+SSN: 123-45-6789 (FAKE - synthetic test data only)
+Credit Card: 4111-1111-1111-1111 (FAKE - synthetic test data only)
+
+Skills: Python, JavaScript, SQL
+Experience: 3 years software development

@@ -1,0 +1,19 @@
+Backend Developer
+
+Join our engineering team to build reliable, scalable server-side systems.
+
+Must-have:
+- Node.js or Python backend development (2+ years)
+- RESTful API design and implementation
+- PostgreSQL or MySQL database experience
+- 2+ years professional software engineering experience
+
+Nice-to-have:
+- TypeScript experience
+- Redis for caching
+- Docker/containerization
+
+Responsibilities:
+- Build and maintain server-side APIs
+- Design database schemas
+- Write technical documentation and participate in code reviews

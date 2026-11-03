@@ -1,0 +1,21 @@
+AI Quality Engineer
+
+We are building next-generation AI products and need a quality engineer who understands
+how to systematically test LLM-powered systems.
+
+Must-have:
+- Python programming (3+ years)
+- Experience with testing frameworks (pytest, unittest)
+- Experience evaluating LLM outputs for quality (hallucination, accuracy, relevance)
+- Writing test cases for ML/AI systems
+- Familiarity with evaluation metrics
+
+Nice-to-have:
+- DeepEval, promptfoo, or similar eval frameworks
+- Experience with Groq, OpenAI, or other LLM APIs
+- CI/CD knowledge (GitHub Actions)
+
+Responsibilities:
+- Design and implement automated test suites for AI products
+- Write golden datasets and ground-truth labels
+- Monitor model quality in production

@@ -1,0 +1,26 @@
+{
+  "chat_id": "chat_01",
+  "description": "User asks to make resume more ATS-friendly",
+  "resume_id": "data_engineer",
+  "jd_id": "data_engineer",
+  "turns": [
+    {
+      "role": "user",
+      "content": "How can I make my resume more ATS-friendly for this data engineer role?"
+    },
+    {
+      "expected_topics": ["keywords", "Python", "SQL", "formatting", "ATS"],
+      "must_not_invent": true,
+      "must_stay_on_topic": true
+    },
+    {
+      "role": "user",
+      "content": "Which keywords are most important to include?"
+    },
+    {
+      "expected_topics": ["Python", "SQL", "ETL", "AWS", "data pipeline"],
+      "must_not_invent": true,
+      "must_stay_on_topic": true
+    }
+  ]
+}

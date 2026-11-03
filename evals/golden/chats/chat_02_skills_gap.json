@@ -1,0 +1,26 @@
+{
+  "chat_id": "chat_02",
+  "description": "ML student asks what skills to learn for AI Quality Engineer role",
+  "resume_id": "ml_student",
+  "jd_id": "ai_quality_engineer",
+  "turns": [
+    {
+      "role": "user",
+      "content": "What skills should I focus on learning first to qualify for this AI Quality Engineer role?"
+    },
+    {
+      "expected_topics": ["pytest", "evaluation", "LLM", "testing"],
+      "must_not_invent": true,
+      "must_stay_on_topic": true
+    },
+    {
+      "role": "user",
+      "content": "I already know Python well. What should I prioritise next?"
+    },
+    {
+      "expected_topics": ["testing frameworks", "eval metrics", "DeepEval", "golden dataset"],
+      "must_not_invent": true,
+      "must_stay_on_topic": true
+    }
+  ]
+}

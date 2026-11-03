@@ -1,0 +1,30 @@
+Alex Chen
+ML Student / Junior AI Engineer
+alex.chen@university.example | 555-345-6789
+
+SKILLS
+Python, PyTorch, scikit-learn, pandas, NumPy, basic SQL, pytest, Jupyter, Git
+
+EDUCATION
+M.Sc. Machine Learning — Tech University, 2024 (expected)
+B.Sc. Computer Science — Tech University, 2022
+
+PROJECTS
+
+LLM Evaluation Framework (capstone project, 2024)
+- Built a prototype tool to assess LLM outputs using evaluation metrics (accuracy, faithfulness, relevance)
+- Implemented test cases for ML model validation using pytest
+- Integrated OpenAI API for automated scoring experiments on 500+ samples
+- Documented methodology for measuring hallucination and factual grounding
+
+Resume Feedback Bot (2023)
+- Fine-tuned a small language model on resume datasets using PyTorch
+- Designed evaluation criteria and wrote 200+ manually-labelled test cases
+- Measured model quality using ROUGE and BERTScore metrics
+
+Sentiment Analysis Pipeline (2022)
+- Trained scikit-learn classifiers on movie review dataset
+- Achieved 88% accuracy with logistic regression baseline
+
+COURSEWORK
+Deep Learning, Natural Language Processing, Probabilistic ML, Software Testing, MLOps

@@ -1,0 +1,21 @@
+Data Engineer
+
+We are looking for an experienced Data Engineer to design, build, and maintain our
+data infrastructure.
+
+Must-have:
+- Python programming (3+ years)
+- SQL and data modeling experience
+- Cloud platform experience (AWS or GCP)
+- ETL pipeline development
+- 2+ years professional data engineering experience
+
+Nice-to-have:
+- Apache Spark or Flink experience
+- dbt (data build tool) experience
+- Kafka or similar message queue experience
+
+Responsibilities:
+- Build and maintain scalable data pipelines
+- Design data warehouse schemas
+- Collaborate with the analytics and data science teams

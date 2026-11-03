@@ -39,6 +39,12 @@ def extract_text_from_bytes(data: bytes, filename: str) -> str:
     if suffix == ".pptx":
         return _from_pptx(data)
     if suffix in (".txt", ".text", ""):
+        # Try UTF-8 first (our golden files); fall back gracefully for other encodings.
+        for enc in ("utf-8", "utf-8-sig", "cp1252", "latin-1"):
+            try:
+                return _normalise(data.decode(enc))
+            except (UnicodeDecodeError, ValueError):
+                continue
         return _normalise(data.decode("utf-8", errors="replace"))
 
     raise UnsupportedFileTypeError(f"Unsupported file type: {suffix!r}")
