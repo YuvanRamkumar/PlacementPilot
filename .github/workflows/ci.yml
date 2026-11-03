@@ -63,14 +63,16 @@ jobs:
       - name: Playwright tests
         run: pytest tests/web/ -v
 
-  # ── Job 3: Eval suite (only when GROQ_API_KEY secret is set) ─────────────────
+  # ── Job 3: Eval suite ────────────────────────────────────────────────────────
+  # When GROQ_API_KEY is set, LLM_PROVIDER=groq and all eval tests run.
+  # When it is absent, LLM_PROVIDER=fake and @requires_real_llm tests auto-skip;
+  # pure code checks (injection, PII) still run and must pass.
   evals:
     name: Eval suite (accuracy / grounding / hallucination / safety)
     runs-on: ubuntu-latest
     needs: lint-and-test
-    if: ${{ secrets.GROQ_API_KEY != '' }}
     env:
-      LLM_PROVIDER: groq
+      LLM_PROVIDER: ${{ secrets.GROQ_API_KEY != '' && 'groq' || 'fake' }}
       LLM_BASE_URL: https://api.groq.com/openai/v1
       LLM_API_KEY: ${{ secrets.GROQ_API_KEY }}
       LLM_MODEL: ${{ vars.LLM_MODEL || 'openai/gpt-oss-20b' }}
