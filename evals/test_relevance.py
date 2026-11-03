@@ -30,6 +30,9 @@ _BULLETS = {
 
 
 def _make_deepeval_judge(judge_llm):
+    import json
+    import re
+
     try:
         from deepeval.models.base_model import DeepEvalBaseLLM
     except ImportError:
@@ -42,10 +45,25 @@ def _make_deepeval_judge(judge_llm):
         def load_model(self):
             return self._client
 
-        def generate(self, prompt: str, schema=None) -> str:
-            return self._client.chat([{"role": "user", "content": prompt}])
+        def generate(self, prompt: str, schema=None):
+            actual_prompt = prompt if schema is None else prompt + "\n\nRespond with valid JSON only."
+            response = self._client.chat([{"role": "user", "content": actual_prompt}])
+            if schema is None:
+                return response
+            text = re.sub(r"^```(?:json)?\s*", "", response.strip(), flags=re.MULTILINE)
+            text = re.sub(r"```\s*$", "", text, flags=re.MULTILINE).strip()
+            try:
+                return schema(**json.loads(text))
+            except Exception:
+                match = re.search(r"\{.*\}", text, re.DOTALL)
+                if match:
+                    try:
+                        return schema(**json.loads(match.group()))
+                    except Exception:
+                        pass
+            return schema.model_construct()
 
-        async def a_generate(self, prompt: str, schema=None) -> str:
+        async def a_generate(self, prompt: str, schema=None):
             return self.generate(prompt, schema)
 
         def get_model_name(self) -> str:
@@ -58,7 +76,7 @@ def _make_deepeval_judge(judge_llm):
 def test_suggestion_relevance(resume_texts, jd_texts, llm, judge_llm):
     try:
         from deepeval.metrics import GEval
-        from deepeval.test_case import LLMTestCase, LLMTestCaseParams
+        from deepeval.test_case import LLMTestCase, SingleTurnParams
     except ImportError:
         pytest.skip("deepeval not installed")
 
@@ -74,8 +92,8 @@ def test_suggestion_relevance(resume_texts, jd_texts, llm, judge_llm):
             "A score of 0 means it has no connection to the JD."
         ),
         evaluation_params=[
-            LLMTestCaseParams.INPUT,
-            LLMTestCaseParams.ACTUAL_OUTPUT,
+            SingleTurnParams.INPUT,
+            SingleTurnParams.ACTUAL_OUTPUT,
         ],
         model=deepeval_judge,
         threshold=RELEVANCE_THRESHOLD,

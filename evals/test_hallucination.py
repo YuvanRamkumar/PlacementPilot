@@ -33,6 +33,9 @@ _BULLETS = {
 
 def _make_deepeval_judge(judge_llm):
     """Wrap our LLMClient as a DeepEvalBaseLLM."""
+    import json
+    import re
+
     try:
         from deepeval.models.base_model import DeepEvalBaseLLM
     except ImportError:
@@ -45,10 +48,27 @@ def _make_deepeval_judge(judge_llm):
         def load_model(self):
             return self._client
 
-        def generate(self, prompt: str, schema=None) -> str:
-            return self._client.chat([{"role": "user", "content": prompt}])
+        def generate(self, prompt: str, schema=None):
+            # When schema is provided, GEval expects a Pydantic instance back, not a string.
+            # Append an explicit JSON-only instruction so Groq returns parseable output.
+            actual_prompt = prompt if schema is None else prompt + "\n\nRespond with valid JSON only."
+            response = self._client.chat([{"role": "user", "content": actual_prompt}])
+            if schema is None:
+                return response
+            text = re.sub(r"^```(?:json)?\s*", "", response.strip(), flags=re.MULTILINE)
+            text = re.sub(r"```\s*$", "", text, flags=re.MULTILINE).strip()
+            try:
+                return schema(**json.loads(text))
+            except Exception:
+                match = re.search(r"\{.*\}", text, re.DOTALL)
+                if match:
+                    try:
+                        return schema(**json.loads(match.group()))
+                    except Exception:
+                        pass
+            return schema.model_construct()
 
-        async def a_generate(self, prompt: str, schema=None) -> str:
+        async def a_generate(self, prompt: str, schema=None):
             return self.generate(prompt, schema)
 
         def get_model_name(self) -> str:
@@ -61,7 +81,7 @@ def _make_deepeval_judge(judge_llm):
 def test_hallucination_rate(resume_texts, jd_texts, llm, judge_llm):
     try:
         from deepeval.metrics import GEval
-        from deepeval.test_case import LLMTestCase, LLMTestCaseParams
+        from deepeval.test_case import LLMTestCase, SingleTurnParams
     except ImportError:
         pytest.skip("deepeval not installed")
 
@@ -77,8 +97,8 @@ def test_hallucination_rate(resume_texts, jd_texts, llm, judge_llm):
             "A score of 0 means the output invented facts not in the resume."
         ),
         evaluation_params=[
-            LLMTestCaseParams.ACTUAL_OUTPUT,
-            LLMTestCaseParams.CONTEXT,
+            SingleTurnParams.ACTUAL_OUTPUT,
+            SingleTurnParams.CONTEXT,
         ],
         model=deepeval_judge,
         threshold=0.5,
