@@ -12,11 +12,11 @@ python-pptx==1.0.2
 openai==1.57.0
 
 # Validation
-pydantic==2.10.1
-pydantic-settings==2.6.1
+pydantic==2.14.2
+pydantic-settings==2.16.2
 
 # Env
-python-dotenv==1.0.1
+python-dotenv==1.2.4
 
 # Data / logging
 pyarrow==18.0.0
