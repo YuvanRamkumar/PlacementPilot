@@ -58,6 +58,30 @@ jobs:
       - name: Newman — Postman collection
         run: newman run postman/collection.json --env-var base_url=http://localhost:8000 --bail
 
+      # ── Locust performance test (FakeLLM baseline) ───────────────────────────
+      - name: Locust performance test
+        run: |
+          mkdir -p reports
+          locust -f tests/perf/locustfile.py --headless -u 10 -r 2 \
+            --run-time 20s --host http://localhost:8000 \
+            --csv reports/perf --html reports/perf.html
+        continue-on-error: true
+
+      # ── promptfoo red-team evals ──────────────────────────────────────────────
+      - name: Install promptfoo
+        run: npm install -g promptfoo@latest
+
+      - name: promptfoo red-team evals
+        run: promptfoo eval --config evals/promptfoo.yaml --env-var BASE_URL=http://localhost:8000 --output reports/promptfoo.json
+        continue-on-error: true
+
+      - name: Upload perf + promptfoo reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-reports-${{ github.run_id }}
+          path: reports/
+
   # ── Job 2: Playwright UI tests ────────────────────────────────────────────────
   playwright:
     name: Playwright UI tests
