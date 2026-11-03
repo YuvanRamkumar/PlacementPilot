@@ -36,3 +36,7 @@ deepeval==4.3.2
 
 # Linting
 ruff==0.8.0
+
+# UI testing
+playwright==1.64.1
+pytest-playwright==0.10.0

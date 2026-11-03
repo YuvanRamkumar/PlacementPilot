@@ -63,8 +63,9 @@ jobs:
     name: Playwright UI tests
     runs-on: ubuntu-latest
     needs: lint-and-test
-    # Enable in Phase 6 once tests/web/ is populated.
-    if: false
+    env:
+      LLM_PROVIDER: fake
+      DEEPEVAL_TELEMETRY_OPT_OUT: "YES"
 
     steps:
       - uses: actions/checkout@v4
@@ -81,7 +82,7 @@ jobs:
         run: playwright install --with-deps chromium
 
       - name: Playwright tests
-        run: pytest tests/web/ -v
+        run: pytest tests/web/ -v --browser chromium
 
   # ── Job 3: Eval suite ────────────────────────────────────────────────────────
   # When GROQ_API_KEY is set, LLM_PROVIDER=groq and all eval tests run.
