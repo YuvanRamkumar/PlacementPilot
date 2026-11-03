@@ -38,6 +38,26 @@ jobs:
       - name: Data tests
         run: pytest tests/data/ -v
 
+      # ── Newman (Postman collection) ──────────────────────────────────────────
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Newman
+        run: npm install -g newman
+
+      - name: Start API server
+        run: uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+
+      - name: Wait for server to be ready
+        run: |
+          for i in $(seq 1 15); do
+            curl -sf http://localhost:8000/health && break || sleep 1
+          done
+
+      - name: Newman — Postman collection
+        run: newman run postman/collection.json --env-var base_url=http://localhost:8000 --bail
+
   # ── Job 2: Playwright UI tests ────────────────────────────────────────────────
   playwright:
     name: Playwright UI tests
