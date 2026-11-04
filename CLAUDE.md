@@ -34,11 +34,13 @@ app/
   parsing.py      pypdf, python-docx, python-pptx, txt → plain text
   pii.py          regex redaction + restore map (PII never leaves the process)
   guardrails.py   injection detection, document delimiting, refusal rules
-  analyzer.py     tool-style steps: extract_requirements, score_requirement, rewrite_bullet
+  analyzer.py     extract_requirements (1 call), score_requirements (1 batched call, chunks of 12 in parallel),
+                  suggest_rewrites (1 call, fetched separately via /suggest); evidence is grounding-checked in code
   llm.py          OpenAI-compatible client, disk cache, retry; FakeLLM when LLM_PROVIDER=fake
   schemas.py      Pydantic models (strict JSON output, validated)
   logging_.py     each request → Parquet row in logs/ (no raw PII)
-  static/         index.html + JS: upload, results table, chat
+  static/         index.html: resume shown as a sheet with highlighter marks on matched lines; must-have tally; chat
+                  Keep the element ids the Playwright page objects use (tests/web/pages/).
 ```
 LLM outputs must be JSON validated by Pydantic; on invalid JSON retry once, then fail cleanly.
 

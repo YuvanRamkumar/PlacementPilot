@@ -11,10 +11,10 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Response, UploadFile
 from fastapi.staticfiles import StaticFiles
 
-from app.analyzer import analyze, rewrite_bullet
+from app.analyzer import analyze, rewrite_bullet, suggest_rewrites
 from app.guardrails import InjectionDetectedError, OffTopicError, check_chat_message, scan_and_wrap
 from app.llm import get_llm
 from app.logging_ import log_analysis
@@ -28,6 +28,8 @@ from app.schemas import (
     RewriteRequest,
     RewrittenBullet,
     ScoreLabel,
+    SuggestRequest,
+    SuggestResponse,
 )
 
 app = FastAPI(title="PlacementPilot", version="0.1.0")
@@ -46,8 +48,10 @@ def health() -> dict:
 
 @app.post("/analyze/upload", response_model=AnalysisResult)
 async def analyze_upload(
+    response: Response,
     resume: UploadFile = File(...),
     jd: UploadFile = File(...),
+    include_suggestions: bool = Form(True),
 ) -> AnalysisResult:
     try:
         resume_text = extract_text_from_bytes(await resume.read(), resume.filename or "resume")
@@ -55,25 +59,32 @@ async def analyze_upload(
     except (FileTooLargeError, UnsupportedFileTypeError) as exc:
         raise HTTPException(status_code=422, detail=str(exc))
 
-    return _run_analysis(resume_text, jd_text)
+    result = _run_analysis(resume_text, jd_text, include_suggestions, response)
+    # Hand the parsed text back so the page can use it for /chat and /suggest.
+    result.resume_text = resume_text
+    result.jd_text = jd_text
+    return result
 
 
 # ── Analyze (JSON text) ───────────────────────────────────────────────────────
 
 @app.post("/analyze", response_model=AnalysisResult)
-def analyze_text(req: AnalyzeTextRequest) -> AnalysisResult:
-    return _run_analysis(req.resume_text, req.jd_text)
+def analyze_text(req: AnalyzeTextRequest, response: Response) -> AnalysisResult:
+    return _run_analysis(req.resume_text, req.jd_text, req.include_suggestions, response)
 
 
-def _run_analysis(resume_text: str, jd_text: str) -> AnalysisResult:
+def _run_analysis(resume_text: str, jd_text: str, include_suggestions: bool = True,
+                  response: Response | None = None) -> AnalysisResult:
     try:
         llm = get_llm()
-        result = analyze(resume_text, jd_text, llm)
+        result = analyze(resume_text, jd_text, llm, include_suggestions=include_suggestions)
     except (InjectionDetectedError, OffTopicError) as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     except Exception as exc:
+        import traceback
+        traceback.print_exc()
         log_analysis(endpoint="/analyze", error=str(exc))
-        raise HTTPException(status_code=500, detail="Analysis failed. Please try again.")
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {exc}")
 
     num_met = sum(1 for s in result.scores if s.label == ScoreLabel.met)
     num_partial = sum(1 for s in result.scores if s.label == ScoreLabel.partial)
@@ -88,7 +99,25 @@ def _run_analysis(resume_text: str, jd_text: str) -> AnalysisResult:
         num_partial=num_partial,
         num_missing=num_missing,
     )
+    if response is not None:
+        # Server-Timing shows each stage in the browser's DevTools Network tab.
+        response.headers["Server-Timing"] = ", ".join(
+            f"{name.removesuffix('_ms')};dur={ms}" for name, ms in result.timings_ms.items()
+        )
     return result
+
+
+# ── Suggest (fetched by the page after the scores are shown) ─────────────────
+
+@app.post("/suggest", response_model=SuggestResponse)
+def suggest(req: SuggestRequest) -> SuggestResponse:
+    try:
+        llm = get_llm()
+        return SuggestResponse(suggestions=suggest_rewrites(req.resume_text, req.requirements, llm))
+    except (InjectionDetectedError, OffTopicError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Suggestions failed. Try again.")
 
 
 # ── Rewrite ───────────────────────────────────────────────────────────────────

@@ -4,349 +4,617 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PlacementPilot</title>
+  <meta name="description" content="Check your resume against one job description, requirement by requirement, with the exact lines that back each match." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet" />
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; }
-    header { background: #1a1d2e; border-bottom: 1px solid #2d3148; padding: 1rem 2rem; display: flex; align-items: center; gap: .75rem; }
-    header h1 { font-size: 1.4rem; font-weight: 700; color: #7c6af5; }
-    header span { font-size: .85rem; color: #64748b; }
-    main { max-width: 960px; margin: 2rem auto; padding: 0 1rem; display: grid; gap: 1.5rem; }
+    :root {
+      --desk: #E9EDF2;
+      --sheet: #FFFFFF;
+      --ink: #172033;
+      --ink-soft: #4A5568;
+      --ink-faint: #7B8698;
+      --rule: #D3D9E2;
+      --focus: #2747D6;
 
-    .card { background: #1a1d2e; border: 1px solid #2d3148; border-radius: 12px; padding: 1.5rem; }
-    .card h2 { font-size: 1rem; font-weight: 600; color: #a5b4fc; margin-bottom: 1rem; }
+      --met: #A7F0BA;      --met-ink: #17643A;
+      --partial: #FFE58A;  --partial-ink: #7A5600;
+      --missing: #FFC2D1;  --missing-ink: #A3214A;
 
-    .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    @media (max-width: 600px) { .input-row { grid-template-columns: 1fr; } }
+      --ui: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+      --paper: "Newsreader", Georgia, "Times New Roman", serif;
 
-    .field label { display: block; font-size: .8rem; color: #94a3b8; margin-bottom: .4rem; }
-    .field textarea { width: 100%; height: 160px; background: #0f1117; border: 1px solid #2d3148; color: #e2e8f0;
-      border-radius: 8px; padding: .75rem; font-size: .85rem; resize: vertical; }
-    .field textarea:focus { outline: none; border-color: #7c6af5; }
+      --s1: .25rem; --s2: .5rem; --s3: .75rem; --s4: 1rem; --s5: 1.5rem; --s6: 2rem; --s7: 3rem; --s8: 4.5rem;
+    }
 
-    .tab-row { display: flex; gap: .5rem; margin-bottom: 1rem; }
-    .tab { background: transparent; border: 1px solid #2d3148; color: #94a3b8; padding: .35rem .9rem;
-      border-radius: 6px; cursor: pointer; font-size: .8rem; }
-    .tab.active { background: #7c6af5; border-color: #7c6af5; color: #fff; }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0; background: var(--desk); color: var(--ink);
+      font: 400 1rem/1.55 var(--ui); min-height: 100vh;
+    }
+    button, input, textarea { font: inherit; color: inherit; }
+    :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-    .file-input { display: none; }
-    .file-label { display: inline-block; background: #0f1117; border: 1px dashed #2d3148;
-      color: #94a3b8; padding: .6rem 1rem; border-radius: 8px; cursor: pointer; font-size: .85rem; width: 100%; text-align: center; }
-    .file-label:hover { border-color: #7c6af5; color: #7c6af5; }
-    .file-chosen { font-size: .75rem; color: #64748b; margin-top: .3rem; }
+    /* ── Top bar ─────────────────────────────────────────────── */
+    .bar {
+      display: flex; align-items: baseline; justify-content: space-between; gap: var(--s4);
+      max-width: 1240px; margin: 0 auto; padding: var(--s5) var(--s5) 0;
+    }
+    .brand { font-weight: 800; font-size: 1.125rem; letter-spacing: -.01em; }
+    .brand-mark {
+      display: inline-block; width: .9em; height: .5em; margin-right: .35em;
+      background: var(--met); transform: skew(-12deg); vertical-align: .05em;
+    }
+    .how { font-size: .9375rem; }
+    .how summary { cursor: pointer; color: var(--ink-soft); list-style: none; }
+    .how summary::-webkit-details-marker { display: none; }
+    .how summary:hover { color: var(--ink); text-decoration: underline; }
+    .how[open] .how-body { display: block; }
+    .how-body {
+      position: absolute; right: var(--s5); margin-top: var(--s2); z-index: 5;
+      width: min(380px, calc(100vw - 2rem)); background: var(--sheet); padding: var(--s4) var(--s5);
+      border: 1px solid var(--rule); box-shadow: 0 12px 32px -12px rgba(23, 32, 51, .35);
+      font-size: .9375rem;
+    }
+    .how-body p { margin: 0 0 var(--s3); }
+    .how-body dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: var(--s2) var(--s3); }
+    .how-body dt { font-weight: 600; }
+    .how-body dd { margin: 0; color: var(--ink-soft); }
 
-    .btn { background: #7c6af5; color: #fff; border: none; padding: .7rem 1.8rem;
-      border-radius: 8px; cursor: pointer; font-size: .9rem; font-weight: 600; }
-    .btn:disabled { opacity: .5; cursor: default; }
-    .btn:not(:disabled):hover { background: #6b57f0; }
-    .btn-sm { padding: .4rem 1rem; font-size: .8rem; border-radius: 6px; }
+    /* ── Input view ──────────────────────────────────────────── */
+    .intake { max-width: 1240px; margin: 0 auto; padding: var(--s7) var(--s5) var(--s6); }
+    .intake h1 {
+      font-size: clamp(2.25rem, 1.4rem + 3.6vw, 4.25rem); line-height: 1.02; letter-spacing: -.035em;
+      font-weight: 800; margin: 0 0 var(--s4); max-width: 17ch;
+    }
+    .intake h1 .hl { background: linear-gradient(transparent 58%, var(--met) 58%, var(--met) 92%, transparent 92%); }
+    .lede { font-size: 1.125rem; color: var(--ink-soft); max-width: 56ch; margin: 0 0 var(--s6); }
 
-    #error-box { display: none; background: #3d1515; border: 1px solid #7f1d1d; color: #fca5a5;
-      border-radius: 8px; padding: .75rem 1rem; font-size: .85rem; }
+    .mode { display: inline-flex; border: 1px solid var(--ink); margin-bottom: var(--s4); }
+    .tab {
+      background: transparent; border: 0; padding: var(--s2) var(--s4); cursor: pointer;
+      font-weight: 600; font-size: .9375rem; color: var(--ink);
+    }
+    .tab + .tab { border-left: 1px solid var(--ink); }
+    .tab.active { background: var(--ink); color: var(--sheet); }
 
-    /* Score badges */
-    .badge { display: inline-block; padding: .2rem .6rem; border-radius: 999px; font-size: .75rem; font-weight: 600; }
-    .badge-met { background: #14532d; color: #86efac; }
-    .badge-partial { background: #422006; color: #fdba74; }
-    .badge-missing { background: #3d1515; color: #fca5a5; }
-    .badge-must { background: #1e1b4b; color: #a5b4fc; }
-    .badge-nice { background: #1c1917; color: #a8a29e; }
-    .badge-resp { background: #1e3a4a; color: #7dd3fc; }
+    .pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s5); }
+    .slot label.slot-title { display: block; font-weight: 700; margin-bottom: var(--s2); }
+    .slot .hint { font-weight: 400; color: var(--ink-faint); margin-left: var(--s2); font-size: .875rem; }
+    .slot textarea {
+      display: block; width: 100%; height: 15rem; resize: vertical; padding: var(--s4) var(--s5);
+      background: var(--sheet); border: 1px solid var(--rule); border-bottom: 2px solid var(--ink);
+      font: 400 1rem/1.6 var(--paper);
+    }
+    .slot textarea::placeholder { color: var(--ink-faint); font-style: italic; }
+    .drop {
+      display: flex; flex-direction: column; justify-content: center; gap: var(--s1);
+      height: 15rem; padding: var(--s5); background: var(--sheet); cursor: pointer;
+      border: 2px dashed var(--rule); transition: border-color .15s;
+    }
+    .drop:hover, .drop.over { border-color: var(--ink); }
+    .drop strong { font-size: 1.0625rem; }
+    .drop span { color: var(--ink-faint); font-size: .9375rem; }
+    .file-input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+    .file-input:focus-visible + .drop { outline: 3px solid var(--focus); outline-offset: 2px; }
+    .file-chosen { margin-top: var(--s2); font-size: .9375rem; color: var(--ink-soft); min-height: 1.5em; }
 
-    /* Stats row */
-    .stats { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
-    .stat { text-align: center; }
-    .stat .val { font-size: 2rem; font-weight: 700; color: #7c6af5; }
-    .stat .lbl { font-size: .75rem; color: #64748b; }
+    .go { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s4); margin-top: var(--s5); }
+    .btn {
+      background: var(--ink); color: var(--sheet); border: 0; cursor: pointer;
+      padding: var(--s3) var(--s5); font-weight: 700; font-size: 1rem;
+    }
+    .btn:hover:not(:disabled) { background: #26344F; }
+    .btn:disabled { opacity: .55; cursor: progress; }
+    .btn-quiet {
+      background: transparent; color: var(--ink); border: 1px solid var(--ink);
+      padding: var(--s2) var(--s4); font-weight: 600; cursor: pointer;
+    }
+    .btn-quiet:hover { background: var(--sheet); }
+    #analyze-status { color: var(--ink-soft); }
+    .dot { display: inline-block; width: .55em; height: .55em; margin-right: .5em; background: var(--partial); animation: blink 1s steps(2) infinite; }
+    @keyframes blink { 50% { opacity: .2; } }
 
-    /* Requirements table */
-    table { width: 100%; border-collapse: collapse; font-size: .85rem; }
-    th { text-align: left; padding: .5rem .75rem; color: #64748b; font-weight: 500; border-bottom: 1px solid #2d3148; }
-    td { padding: .6rem .75rem; border-bottom: 1px solid #1a1d2e; vertical-align: top; }
-    tr:hover td { background: #1e2235; }
-    .evidence { font-size: .78rem; color: #94a3b8; font-style: italic; margin-top: .2rem; }
+    #error-box {
+      display: none; margin-top: var(--s4); padding: var(--s3) var(--s4); max-width: 70ch;
+      background: var(--missing); color: #5C0F27; border-left: 4px solid var(--missing-ink);
+    }
 
-    /* Suggestions */
-    .suggestion { background: #0f1117; border: 1px solid #2d3148; border-radius: 8px; padding: 1rem; margin-bottom: .75rem; }
-    .suggestion .orig { font-size: .8rem; color: #64748b; margin-bottom: .5rem; }
-    .suggestion .new { color: #e2e8f0; }
+    /* ── Results ─────────────────────────────────────────────── */
+    #results { display: none; border-top: 1px solid var(--rule); }
+    .report {
+      max-width: 1240px; margin: 0 auto; padding: var(--s6) var(--s5) var(--s8);
+      display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: var(--s7);
+      align-items: start;
+    }
 
-    /* Chat */
-    #chat-box { height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: .5rem;
-      padding: .5rem; background: #0f1117; border: 1px solid #2d3148; border-radius: 8px; margin-bottom: .75rem; }
-    .msg { max-width: 80%; padding: .6rem .9rem; border-radius: 10px; font-size: .85rem; line-height: 1.5; }
-    .msg.user { align-self: flex-end; background: #7c6af5; color: #fff; }
-    .msg.assistant { align-self: flex-start; background: #1a1d2e; color: #e2e8f0; border: 1px solid #2d3148; }
-    .chat-input-row { display: flex; gap: .5rem; }
-    #chat-input { flex: 1; background: #0f1117; border: 1px solid #2d3148; color: #e2e8f0;
-      border-radius: 8px; padding: .6rem .9rem; font-size: .85rem; }
-    #chat-input:focus { outline: none; border-color: #7c6af5; }
+    .verdict h2 {
+      font-size: clamp(1.75rem, 1.2rem + 2vw, 2.75rem); line-height: 1.08; letter-spacing: -.03em;
+      margin: 0 0 var(--s4); font-weight: 800; max-width: 20ch; text-wrap: balance;
+    }
+    .tally { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 var(--s4); padding: 0; list-style: none; }
+    .tally li {
+      width: 22px; height: 44px; background: var(--sheet); border: 1.5px solid var(--ink);
+      transform: skew(-8deg); position: relative; overflow: hidden;
+    }
+    .tally li::after { content: ""; position: absolute; inset: 0; transform-origin: bottom; }
+    .tally li.met::after { background: var(--met); }
+    .tally li.partial::after { background: linear-gradient(transparent 50%, var(--partial) 50%); }
+    .tally.reveal li::after { animation: fill .45s cubic-bezier(.2, .7, .3, 1) both; animation-delay: calc(var(--i) * 70ms); }
+    @keyframes fill { from { transform: scaleY(0); } to { transform: scaleY(1); } }
 
-    #results { display: none; }
-    .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid #fff3;
-      border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: .5rem; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .figures { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s5); margin: 0 0 var(--s6); color: var(--ink-soft); }
+    .figures b { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+    .figures .note { flex-basis: 100%; font-size: .875rem; color: var(--ink-faint); }
+
+
+    table.reqs { width: 100%; border-collapse: collapse; }
+    .reqs td { padding: var(--s3) 0; border-top: 1px solid var(--rule); vertical-align: top; }
+    .reqs tr.group-row td { border-top: 0; padding: var(--s6) 0 var(--s2); }
+    .reqs tr.group-row:first-child td { padding-top: 0; }
+    .reqs tr.group-row h3 { margin: 0; font-size: 1.125rem; font-weight: 700; }
+    .reqs tr.group-row small { font-weight: 400; color: var(--ink-faint); font-size: .9375rem; margin-left: var(--s2); }
+    .reqs td.mark-cell { width: 6.5rem; padding-right: var(--s3); }
+    .badge {
+      display: inline-block; padding: 1px var(--s2); font-size: .875rem; font-weight: 700;
+      transform: skew(-8deg);
+    }
+    .badge > span { display: inline-block; transform: skew(8deg); }
+    .badge-met { background: var(--met); color: var(--met-ink); }
+    .badge-partial { background: var(--partial); color: var(--partial-ink); }
+    .badge-missing { background: var(--missing); color: var(--missing-ink); }
+    .req-text { font-weight: 500; }
+    .evidence { margin: var(--s1) 0 0; font: italic 400 .9688rem/1.5 var(--paper); color: var(--ink-soft); }
+    .jump {
+      background: none; border: 0; padding: 0; margin-top: var(--s1); cursor: pointer;
+      font-size: .875rem; font-weight: 600; color: var(--focus); text-decoration: underline; text-underline-offset: 3px;
+    }
+    .no-evidence { margin: var(--s1) 0 0; font-size: .875rem; color: var(--ink-faint); }
+
+    /* The sheet: the resume as a printed page with highlighter marks */
+    .sheet-wrap { position: sticky; top: var(--s5); }
+    .sheet-caption { display: flex; justify-content: space-between; gap: var(--s4); font-size: .875rem; color: var(--ink-faint); margin-bottom: var(--s2); }
+    .sheet {
+      background: var(--sheet); padding: var(--s6) var(--s6) var(--s7);
+      box-shadow: 0 1px 0 var(--rule), 0 24px 48px -28px rgba(23, 32, 51, .45);
+      font: 400 .96875rem/1.65 var(--paper); white-space: pre-wrap; overflow-wrap: anywhere;
+      max-height: calc(100vh - 6rem); overflow: auto;
+    }
+    .sheet mark { color: inherit; padding: 0 .08em; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+    .sheet mark.met { background: var(--met); }
+    .sheet mark.partial { background: var(--partial); }
+    .sheet mark.focus { outline: 2px solid var(--ink); outline-offset: 1px; }
+    .legend { display: flex; gap: var(--s4); margin-top: var(--s3); font-size: .875rem; color: var(--ink-soft); }
+    .legend i { display: inline-block; width: 1.4em; height: .7em; margin-right: .35em; vertical-align: .05em; transform: skew(-12deg); }
+
+    /* Rewrites */
+    .rewrites { margin-top: var(--s7); }
+    .rewrites h2, .ask h2 { font-size: 1.375rem; letter-spacing: -.02em; margin: 0 0 var(--s2); }
+    .rewrites > p, .ask > p { color: var(--ink-soft); margin: 0 0 var(--s4); }
+    .pair-rw { padding: var(--s4) 0; border-top: 1px solid var(--rule); }
+    .pair-rw .was { margin: 0 0 var(--s2); color: var(--ink-faint); font: 400 .9688rem/1.5 var(--paper); text-decoration: line-through; text-decoration-color: var(--missing-ink); }
+    .pair-rw .now { margin: 0; font: 400 1.0625rem/1.55 var(--paper); }
+    .copy { margin-top: var(--s2); background: none; border: 0; padding: 0; cursor: pointer; font-size: .875rem; font-weight: 600; color: var(--focus); text-decoration: underline; text-underline-offset: 3px; }
+
+    /* Ask */
+    .ask { margin-top: var(--s7); }
+    .starters { display: flex; flex-wrap: wrap; gap: var(--s2); margin-bottom: var(--s3); }
+    #chat-box { display: flex; flex-direction: column; gap: var(--s3); margin-bottom: var(--s3); max-height: 28rem; overflow-y: auto; }
+    #chat-box:empty { display: none; }
+    .msg { max-width: 92%; padding: var(--s3) var(--s4); white-space: pre-wrap; line-height: 1.55; }
+    .msg.user { align-self: flex-end; background: var(--ink); color: var(--sheet); }
+    .msg.assistant { align-self: flex-start; background: var(--sheet); font-family: var(--paper); font-size: 1.03rem; border-left: 3px solid var(--met); }
+    .msg.pending { align-self: flex-start; color: var(--ink-faint); font-style: italic; }
+    .chat-input-row { display: flex; gap: var(--s2); }
+    #chat-input { flex: 1; min-width: 0; padding: var(--s3) var(--s4); background: var(--sheet); border: 1px solid var(--rule); border-bottom: 2px solid var(--ink); }
+
+    /* ── Responsive ──────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .report { grid-template-columns: 1fr; gap: var(--s6); }
+      .sheet-wrap { position: static; order: 2; }
+      .sheet { max-height: 70vh; padding: var(--s5); }
+    }
+    @media (max-width: 640px) {
+      .bar, .intake, .report { padding-left: var(--s4); padding-right: var(--s4); }
+      .intake { padding-top: var(--s6); }
+      .pair { grid-template-columns: 1fr; }
+      .slot textarea, .drop { height: 11rem; }
+      .reqs td.mark-cell { width: 5.5rem; }
+      .how-body { right: var(--s4); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+    }
   </style>
 </head>
 <body>
-<header>
-  <h1>PlacementPilot</h1>
-  <span>Resume × JD Analyser</span>
+
+<header class="bar">
+  <div class="brand"><span class="brand-mark" aria-hidden="true"></span>PlacementPilot</div>
+  <details class="how">
+    <summary>How scoring works</summary>
+    <div class="how-body">
+      <p>The job description is split into requirements. Each one is checked against your resume and marked:</p>
+      <dl>
+        <dt><span class="badge badge-met"><span>Met</span></span></dt><dd>Every core part is backed by a line in your resume.</dd>
+        <dt><span class="badge badge-partial"><span>Partial</span></span></dt><dd>Some parts, or a closely related skill, are backed.</dd>
+        <dt><span class="badge badge-missing"><span>Missing</span></span></dt><dd>Nothing in your resume backs it.</dd>
+      </dl>
+      <p style="margin-top:.75rem">Your match is must-haves met, plus half a point for each partial, out of all must-haves. Every quote shown is checked against your resume, so nothing is invented. Your email, phone and links are removed before anything is sent to the AI.</p>
+    </div>
+  </details>
 </header>
+
 <main>
+  <section class="intake" aria-labelledby="intake-title">
+    <h1 id="intake-title">Check your resume against <span class="hl">one job</span>, line by line.</h1>
+    <p class="lede">Add your resume and the job description. Each requirement gets marked met, partial or missing, with the exact line from your resume that backs it.</p>
 
-  <!-- Input card -->
-  <div class="card">
-    <h2>Upload or paste your resume & job description</h2>
-    <div class="tab-row">
-      <button class="tab active" id="tab-paste" onclick="switchTab('paste')">Paste text</button>
-      <button class="tab" id="tab-file" onclick="switchTab('file')">Upload files</button>
+    <div class="mode" role="group" aria-label="How to add your documents">
+      <button class="tab active" id="tab-paste" type="button" aria-pressed="true" onclick="switchTab('paste')">Paste text</button>
+      <button class="tab" id="tab-file" type="button" aria-pressed="false" onclick="switchTab('file')">Upload files</button>
     </div>
 
-    <!-- Paste mode -->
     <div id="mode-paste">
-      <div class="input-row">
-        <div class="field">
-          <label>Resume</label>
-          <textarea id="resume-text" placeholder="Paste your resume here…"></textarea>
+      <div class="pair">
+        <div class="slot">
+          <label class="slot-title" for="resume-text">Your resume</label>
+          <textarea id="resume-text" placeholder="Paste the full text of your resume"></textarea>
         </div>
-        <div class="field">
-          <label>Job Description</label>
-          <textarea id="jd-text" placeholder="Paste the job description here…"></textarea>
+        <div class="slot">
+          <label class="slot-title" for="jd-text">The job description</label>
+          <textarea id="jd-text" placeholder="Paste the job description, including the requirements"></textarea>
         </div>
       </div>
     </div>
 
-    <!-- File mode -->
     <div id="mode-file" style="display:none">
-      <div class="input-row">
-        <div class="field">
-          <label>Resume (PDF / DOCX / PPTX / TXT)</label>
-          <label class="file-label" for="resume-file">Choose file…</label>
-          <input class="file-input" type="file" id="resume-file" accept=".pdf,.docx,.pptx,.txt"
-            onchange="document.getElementById('resume-file-name').textContent = this.files[0]?.name || ''" />
-          <div class="file-chosen" id="resume-file-name">No file chosen</div>
+      <div class="pair">
+        <div class="slot">
+          <span class="slot-title" style="display:block;font-weight:700;margin-bottom:.5rem">Your resume <span class="hint">PDF, DOCX, PPTX or TXT</span></span>
+          <input class="file-input" type="file" id="resume-file" accept=".pdf,.docx,.pptx,.txt" />
+          <label class="drop" for="resume-file" data-for="resume-file">
+            <strong>Choose your resume</strong>
+            <span>or drop the file here</span>
+          </label>
+          <div class="file-chosen" id="resume-file-name" aria-live="polite">No file chosen</div>
         </div>
-        <div class="field">
-          <label>Job Description (PDF / DOCX / TXT)</label>
-          <label class="file-label" for="jd-file">Choose file…</label>
-          <input class="file-input" type="file" id="jd-file" accept=".pdf,.docx,.pptx,.txt"
-            onchange="document.getElementById('jd-file-name').textContent = this.files[0]?.name || ''" />
-          <div class="file-chosen" id="jd-file-name">No file chosen</div>
+        <div class="slot">
+          <span class="slot-title" style="display:block;font-weight:700;margin-bottom:.5rem">The job description <span class="hint">PDF, DOCX, PPTX or TXT</span></span>
+          <input class="file-input" type="file" id="jd-file" accept=".pdf,.docx,.pptx,.txt" />
+          <label class="drop" for="jd-file" data-for="jd-file">
+            <strong>Choose the job description</strong>
+            <span>or drop the file here</span>
+          </label>
+          <div class="file-chosen" id="jd-file-name" aria-live="polite">No file chosen</div>
         </div>
       </div>
     </div>
 
-    <div style="margin-top:1rem; display:flex; gap:.75rem; align-items:center;">
-      <button class="btn" id="analyze-btn" onclick="runAnalysis()">Analyse</button>
-      <span id="analyze-status" style="font-size:.85rem; color:#64748b;"></span>
+    <div class="go">
+      <button class="btn" id="analyze-btn" type="button" onclick="runAnalysis()">Check my resume</button>
+      <span id="analyze-status" role="status" aria-live="polite"></span>
     </div>
-    <div id="error-box" style="margin-top:.75rem;"></div>
-  </div>
+    <div id="error-box" role="alert"></div>
+  </section>
 
-  <!-- Results -->
-  <div id="results">
+  <section id="results" aria-labelledby="verdict-title">
+    <div class="report">
+      <div>
+        <div class="verdict">
+          <h2 id="verdict-title">Your match</h2>
+          <ol class="tally" id="tally" aria-label="Must-have requirements, one mark each"></ol>
+          <p class="figures">
+            <span>Match <b id="stat-match">—</b></span>
+            <span>Keywords found <b id="stat-kw">—</b></span>
+            <span><b id="stat-met">0</b> met</span>
+            <span><b id="stat-partial">0</b> partial</span>
+            <span><b id="stat-missing">0</b> missing</span>
+            <span class="note" id="timing-note"></span>
+          </p>
+        </div>
 
-    <!-- Stats -->
-    <div class="card">
-      <h2>Match Summary</h2>
-      <div class="stats">
-        <div class="stat"><div class="val" id="stat-match">—</div><div class="lbl">Must-have match %</div></div>
-        <div class="stat"><div class="val" id="stat-kw">—</div><div class="lbl">Keyword coverage %</div></div>
-        <div class="stat"><div class="val" id="stat-met">—</div><div class="lbl">Met</div></div>
-        <div class="stat"><div class="val" id="stat-partial">—</div><div class="lbl">Partial</div></div>
-        <div class="stat"><div class="val" id="stat-missing">—</div><div class="lbl">Missing</div></div>
+        <table class="reqs" aria-label="Requirements and how your resume covers them">
+          <tbody id="req-table"></tbody>
+        </table>
+
+        <div class="rewrites" id="suggestions-card" style="display:none">
+          <h2>Rewrites for your weakest matches</h2>
+          <p>Reworded from lines already in your resume. Nothing new is added, so check each one reads true before you use it.</p>
+          <div id="suggestions-list" aria-live="polite"></div>
+        </div>
+
+        <div class="ask">
+          <h2>Ask about this match</h2>
+          <p>Follow-up questions use this resume and job description.</p>
+          <div class="starters">
+            <button class="btn-quiet starter" type="button">What should I learn first?</button>
+            <button class="btn-quiet starter" type="button">Make my summary fit this job</button>
+            <button class="btn-quiet starter" type="button">Which gaps matter most?</button>
+          </div>
+          <div id="chat-box" aria-live="polite"></div>
+          <form class="chat-input-row" onsubmit="event.preventDefault(); sendChat();">
+            <label class="visually-hidden" for="chat-input">Your question</label>
+            <input type="text" id="chat-input" placeholder="Ask a question about this match" autocomplete="off" />
+            <button class="btn" type="submit">Send</button>
+          </form>
+        </div>
       </div>
-    </div>
 
-    <!-- Requirements table -->
-    <div class="card">
-      <h2>Requirement Breakdown</h2>
-      <table>
-        <thead><tr><th>Requirement</th><th>Type</th><th>Score</th></tr></thead>
-        <tbody id="req-table"></tbody>
-      </table>
+      <aside class="sheet-wrap" aria-label="Your resume with matched lines highlighted">
+        <div class="sheet-caption"><span>Your resume</span><span id="mark-count"></span></div>
+        <div class="sheet" id="sheet" tabindex="0"></div>
+        <div class="legend" aria-hidden="true">
+          <span><i style="background:var(--met)"></i>Backs a met requirement</span>
+          <span><i style="background:var(--partial)"></i>Backs a partial one</span>
+        </div>
+      </aside>
     </div>
-
-    <!-- Suggestions -->
-    <div class="card" id="suggestions-card" style="display:none">
-      <h2>Suggested Resume Improvements</h2>
-      <div id="suggestions-list"></div>
-    </div>
-
-    <!-- Chat -->
-    <div class="card">
-      <h2>Follow-up Chat</h2>
-      <div id="chat-box"></div>
-      <div class="chat-input-row">
-        <input type="text" id="chat-input" placeholder="Ask a follow-up question…" onkeydown="if(event.key==='Enter')sendChat()" />
-        <button class="btn btn-sm" onclick="sendChat()">Send</button>
-      </div>
-    </div>
-  </div>
-
+  </section>
 </main>
 
 <script>
   let currentMode = 'paste';
   let analysisResult = null;
   let chatHistory = [];
+  let docs = { resume: '', jd: '' };
 
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const LABELS = { met: 'Met', partial: 'Partial', missing: 'Missing' };
+  const GROUPS = [
+    ['must_have', 'Must-haves', 'These decide your match'],
+    ['nice_to_have', 'Nice to have', 'Bonus points'],
+    ['responsibility', 'What the job involves', 'Day-to-day work'],
+  ];
+
+  // ── Input ──────────────────────────────────────────────────
   function switchTab(mode) {
     currentMode = mode;
-    document.getElementById('mode-paste').style.display = mode === 'paste' ? '' : 'none';
-    document.getElementById('mode-file').style.display = mode === 'file' ? '' : 'none';
-    document.getElementById('tab-paste').classList.toggle('active', mode === 'paste');
-    document.getElementById('tab-file').classList.toggle('active', mode === 'file');
+    $('mode-paste').style.display = mode === 'paste' ? '' : 'none';
+    $('mode-file').style.display = mode === 'file' ? '' : 'none';
+    for (const m of ['paste', 'file']) {
+      const t = $('tab-' + m);
+      t.classList.toggle('active', m === mode);
+      t.setAttribute('aria-pressed', String(m === mode));
+    }
   }
 
-  function showError(msg) {
-    const box = document.getElementById('error-box');
-    box.textContent = msg;
-    box.style.display = 'block';
+  for (const id of ['resume-file', 'jd-file']) {
+    const input = $(id);
+    const zone = document.querySelector(`.drop[data-for="${id}"]`);
+    const showName = () => { $(id + '-name').textContent = input.files[0] ? input.files[0].name : 'No file chosen'; };
+    input.addEventListener('change', showName);
+    zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+    zone.addEventListener('drop', (e) => {
+      e.preventDefault(); zone.classList.remove('over');
+      if (e.dataTransfer.files.length) { input.files = e.dataTransfer.files; showName(); }
+    });
   }
 
-  function clearError() {
-    document.getElementById('error-box').style.display = 'none';
+  function showError(msg) { const b = $('error-box'); b.textContent = msg; b.style.display = 'block'; }
+  function clearError() { $('error-box').style.display = 'none'; }
+
+  async function readError(resp) {
+    try {
+      const e = await resp.json();
+      if (Array.isArray(e.detail)) return 'Each document needs at least a few lines of text.';
+      return e.detail || `The check failed (error ${resp.status}). Try again.`;
+    } catch { return `The check failed (error ${resp.status}). Try again.`; }
   }
 
+  // ── Analysis ───────────────────────────────────────────────
   async function runAnalysis() {
     clearError();
-    const btn = document.getElementById('analyze-btn');
-    const status = document.getElementById('analyze-status');
-    btn.disabled = true;
-    status.innerHTML = '<span class="spinner"></span>Analysing…';
+    const btn = $('analyze-btn');
+    const status = $('analyze-status');
+    let resp;
 
-    try {
-      let result;
-      if (currentMode === 'paste') {
-        const resumeText = document.getElementById('resume-text').value.trim();
-        const jdText = document.getElementById('jd-text').value.trim();
-        if (!resumeText || !jdText) { showError('Please paste both the resume and job description.'); return; }
-        const resp = await fetch('/analyze', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ resume_text: resumeText, jd_text: jdText }),
+    if (currentMode === 'paste') {
+      const resumeText = $('resume-text').value.trim();
+      const jdText = $('jd-text').value.trim();
+      if (!resumeText || !jdText) { showError('Please paste both your resume and the job description.'); return; }
+      docs = { resume: resumeText, jd: jdText };
+      btn.disabled = true; status.innerHTML = '<span class="dot"></span>Checking each requirement';
+      try {
+        resp = await fetch('/analyze', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ resume_text: resumeText, jd_text: jdText, include_suggestions: false }),
         });
-        if (!resp.ok) { const e = await resp.json(); showError(e.detail || 'Analysis failed.'); return; }
-        result = await resp.json();
-      } else {
-        const resumeFile = document.getElementById('resume-file').files[0];
-        const jdFile = document.getElementById('jd-file').files[0];
-        if (!resumeFile || !jdFile) { showError('Please choose both files.'); return; }
-        const fd = new FormData();
-        fd.append('resume', resumeFile);
-        fd.append('jd', jdFile);
-        const resp = await fetch('/analyze/upload', { method: 'POST', body: fd });
-        if (!resp.ok) { const e = await resp.json(); showError(e.detail || 'Analysis failed.'); return; }
-        result = await resp.json();
-      }
-      analysisResult = result;
-      chatHistory = [];
-      renderResults(result);
-    } catch(err) {
-      showError('Network error: ' + err.message);
-    } finally {
-      btn.disabled = false;
-      status.textContent = '';
-    }
-  }
-
-  function typeBadge(type) {
-    const map = { must_have: ['badge-must','Must-have'], nice_to_have: ['badge-nice','Nice-to-have'], responsibility: ['badge-resp','Responsibility'] };
-    const [cls, label] = map[type] || ['',''];
-    return `<span class="badge ${cls}">${label}</span>`;
-  }
-
-  function scoreBadge(label) {
-    const map = { met: 'badge-met', partial: 'badge-partial', missing: 'badge-missing' };
-    return `<span class="badge ${map[label] || ''}">${label}</span>`;
-  }
-
-  function renderResults(r) {
-    document.getElementById('results').style.display = 'block';
-    document.getElementById('stat-match').textContent = r.match_pct.toFixed(1) + '%';
-    document.getElementById('stat-kw').textContent = r.keyword_coverage_pct.toFixed(1) + '%';
-
-    const met = r.scores.filter(s => s.label === 'met').length;
-    const partial = r.scores.filter(s => s.label === 'partial').length;
-    const missing = r.scores.filter(s => s.label === 'missing').length;
-    document.getElementById('stat-met').textContent = met;
-    document.getElementById('stat-partial').textContent = partial;
-    document.getElementById('stat-missing').textContent = missing;
-
-    const scoreMap = {};
-    r.scores.forEach(s => scoreMap[s.requirement_id] = s);
-    const tbody = document.getElementById('req-table');
-    tbody.innerHTML = '';
-    r.requirements.forEach(req => {
-      const s = scoreMap[req.id] || {};
-      const evHtml = s.evidence ? `<div class="evidence">"${s.evidence}"</div>` : '';
-      tbody.insertAdjacentHTML('beforeend', `
-        <tr>
-          <td>${req.text}${evHtml}</td>
-          <td>${typeBadge(req.type)}</td>
-          <td>${scoreBadge(s.label || 'missing')}</td>
-        </tr>`);
-    });
-
-    const suggCard = document.getElementById('suggestions-card');
-    const suggList = document.getElementById('suggestions-list');
-    if (r.suggestions && r.suggestions.length) {
-      suggList.innerHTML = '';
-      r.suggestions.forEach(s => {
-        suggList.insertAdjacentHTML('beforeend', `
-          <div class="suggestion">
-            <div class="orig">Original: ${s.original}</div>
-            <div class="new">${s.bullet}</div>
-          </div>`);
-      });
-      suggCard.style.display = '';
+      } catch (err) { return finish(btn, status, 'Could not reach the server. Check that it is running, then try again.'); }
     } else {
-      suggCard.style.display = 'none';
+      const resumeFile = $('resume-file').files[0];
+      const jdFile = $('jd-file').files[0];
+      if (!resumeFile || !jdFile) { showError('Please choose both files: your resume and the job description.'); return; }
+      const fd = new FormData();
+      fd.append('resume', resumeFile); fd.append('jd', jdFile); fd.append('include_suggestions', 'false');
+      btn.disabled = true; status.innerHTML = '<span class="dot"></span>Reading files and checking each requirement';
+      try { resp = await fetch('/analyze/upload', { method: 'POST', body: fd }); }
+      catch (err) { return finish(btn, status, 'Could not reach the server. Check that it is running, then try again.'); }
     }
 
-    document.getElementById('chat-box').innerHTML = '';
-    document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+    if (!resp.ok) return finish(btn, status, await readError(resp));
+    const result = await resp.json();
+    if (result.resume_text) docs = { resume: result.resume_text, jd: result.jd_text || '' };
+    analysisResult = result;
+    chatHistory = [];
+    renderResults(result);
+    finish(btn, status);
+    loadSuggestions(result);
   }
+
+  function finish(btn, status, error) {
+    btn.disabled = false; status.textContent = '';
+    if (error) showError(error);
+  }
+
+  // ── Rendering ──────────────────────────────────────────────
+  function renderResults(r) {
+    $('results').style.display = 'block';
+    const byId = Object.fromEntries(r.scores.map((s) => [s.requirement_id, s]));
+    const label = (req) => (byId[req.id] && byId[req.id].label) || 'missing';
+    const count = (l) => r.scores.filter((s) => s.label === l).length;
+
+    const must = r.requirements.filter((q) => q.type === 'must_have');
+    const mustMet = must.filter((q) => label(q) === 'met').length;
+    const mustPartial = must.filter((q) => label(q) === 'partial').length;
+    $('verdict-title').textContent = must.length
+      ? `You cover ${mustMet} of ${must.length} must‑haves${mustPartial ? `, and ${mustPartial} partly` : ''}.`
+      : 'This job description lists no must-haves.';
+
+    const tally = $('tally');
+    tally.classList.remove('reveal');
+    tally.innerHTML = must.map((q, i) =>
+      `<li class="${label(q)}" style="--i:${i}" title="${esc(q.text)}: ${LABELS[label(q)]}"></li>`).join('');
+    void tally.offsetWidth; tally.classList.add('reveal');
+
+    $('stat-match').textContent = r.match_pct.toFixed(0) + '%';
+    $('stat-kw').textContent = r.keyword_coverage_pct.toFixed(0) + '%';
+    $('stat-met').textContent = count('met');
+    $('stat-partial').textContent = count('partial');
+    $('stat-missing').textContent = count('missing');
+    const total = r.timings_ms && r.timings_ms.total_ms;
+    $('timing-note').textContent = (must.length ? 'A partial counts as half a must-have. ' : '')
+      + (total ? `Checked in ${(total / 1000).toFixed(1)} s.` : '');
+
+    // Requirement rows, grouped by type
+    let html = '';
+    for (const [type, title, sub] of GROUPS) {
+      const items = r.requirements.filter((q) => q.type === type);
+      if (!items.length) continue;
+      html += `<tr class="group-row"><td colspan="2"><h3>${title}<small>${sub}</small></h3></td></tr>`;
+      for (const q of items) {
+        const s = byId[q.id] || {};
+        const l = label(q);
+        const ev = s.evidence
+          ? `<p class="evidence">“${esc(s.evidence)}”</p><button class="jump" type="button" data-req="${esc(q.id)}">Show in resume</button>`
+          : `<p class="no-evidence">${l === 'missing' ? 'Nothing in your resume backs this yet.' : 'Judged from your resume as a whole.'}</p>`;
+        html += `<tr data-req="${esc(q.id)}">
+          <td class="mark-cell"><span class="badge badge-${l}"><span>${LABELS[l]}</span></span></td>
+          <td><div class="req-text">${esc(q.text)}</div>${ev}</td></tr>`;
+      }
+    }
+    $('req-table').innerHTML = html;
+
+    renderSheet(r.scores);
+    $('suggestions-card').style.display = 'none';
+    $('chat-box').innerHTML = '';
+    $('results').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }
+
+  // Draws the resume as a sheet and highlights each evidence quote where it appears.
+  function renderSheet(scores) {
+    const text = docs.resume || '';
+    const ranges = [];
+    for (const s of scores) {
+      if (!s.evidence || s.label === 'missing') continue;
+      const pattern = s.evidence.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+      const m = new RegExp(pattern, 'i').exec(text);
+      if (m) ranges.push({ start: m.index, end: m.index + m[0].length, id: s.requirement_id, label: s.label });
+    }
+    ranges.sort((a, b) => a.start - b.start);
+    let html = '', pos = 0, placed = 0;
+    for (const g of ranges) {
+      if (g.start < pos) continue; // overlapping quote: keep the first one
+      html += esc(text.slice(pos, g.start));
+      html += `<mark class="${g.label}" data-req="${esc(g.id)}">${esc(text.slice(g.start, g.end))}</mark>`;
+      pos = g.end; placed++;
+    }
+    html += esc(text.slice(pos));
+    $('sheet').innerHTML = html || '<em>Your resume text appears here.</em>';
+    $('mark-count').textContent = placed ? `${placed} line${placed === 1 ? '' : 's'} marked` : '';
+  }
+
+  $('req-table').addEventListener('click', (e) => {
+    const btn = e.target.closest('.jump');
+    if (!btn) return;
+    const mark = document.querySelector(`#sheet mark[data-req="${CSS.escape(btn.dataset.req)}"]`);
+    document.querySelectorAll('#sheet mark.focus').forEach((m) => m.classList.remove('focus'));
+    if (!mark) { btn.textContent = 'This line is worded differently in your resume'; return; }
+    mark.classList.add('focus');
+    mark.scrollIntoView({ block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  });
+
+  // ── Rewrites (loaded after the scores are on screen) ───────
+  async function loadSuggestions(r) {
+    const byId = Object.fromEntries(r.scores.map((s) => [s.requirement_id, s.label]));
+    const gaps = r.requirements
+      .filter((q) => byId[q.id] !== 'met')
+      .sort((a, b) => (a.type === 'must_have' ? 0 : 1) - (b.type === 'must_have' ? 0 : 1));
+    if (!gaps.length || !docs.resume) return;
+    const card = $('suggestions-card'), list = $('suggestions-list');
+    card.style.display = '';
+    list.innerHTML = '<p class="no-evidence"><span class="dot"></span>Writing rewrites from your resume</p>';
+    try {
+      const resp = await fetch('/suggest', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resume_text: docs.resume, requirements: gaps.slice(0, 6) }),
+      });
+      if (r !== analysisResult) return; // a newer check has started
+      const data = resp.ok ? await resp.json() : { suggestions: [] };
+      if (!data.suggestions.length) { card.style.display = 'none'; return; }
+      list.innerHTML = data.suggestions.map((s, i) => `
+        <div class="pair-rw">
+          <p class="was">${esc(s.original)}</p>
+          <p class="now" id="rw-${i}">${esc(s.bullet)}</p>
+          <button class="copy" type="button" data-target="rw-${i}">Copy rewrite</button>
+        </div>`).join('');
+    } catch { card.style.display = 'none'; }
+  }
+
+  $('suggestions-list').addEventListener('click', async (e) => {
+    const btn = e.target.closest('.copy');
+    if (!btn) return;
+    try { await navigator.clipboard.writeText($(btn.dataset.target).textContent); btn.textContent = 'Copied'; }
+    catch { btn.textContent = 'Select the text to copy it'; }
+  });
+
+  // ── Chat ───────────────────────────────────────────────────
+  document.querySelectorAll('.starter').forEach((b) => b.addEventListener('click', () => {
+    $('chat-input').value = b.textContent; sendChat();
+  }));
 
   async function sendChat() {
-    const input = document.getElementById('chat-input');
+    const input = $('chat-input');
     const msg = input.value.trim();
     if (!msg) return;
     input.value = '';
-
     appendMsg('user', msg);
     chatHistory.push({ role: 'user', content: msg });
-
-    const payload = {
-      message: msg,
-      history: chatHistory.slice(0, -1),
-      resume_text: document.getElementById('resume-text').value || undefined,
-      jd_text: document.getElementById('jd-text').value || undefined,
-    };
+    const pending = appendMsg('pending', 'Thinking about your match');
 
     try {
       const resp = await fetch('/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: msg, history: chatHistory.slice(0, -1),
+          resume_text: docs.resume || undefined, jd_text: docs.jd || undefined,
+        }),
       });
       const data = await resp.json();
-      const reply = resp.ok ? data.reply : (data.detail || 'Error from server.');
+      const reply = resp.ok ? data.reply : (typeof data.detail === 'string' ? data.detail : 'The question could not be answered. Try rewording it.');
+      pending.remove();
       appendMsg('assistant', reply);
       chatHistory.push({ role: 'assistant', content: reply });
-    } catch(err) {
-      appendMsg('assistant', 'Network error: ' + err.message);
+    } catch {
+      pending.remove();
+      appendMsg('assistant', 'Could not reach the server. Check that it is running, then ask again.');
     }
   }
 
   function appendMsg(role, text) {
-    const box = document.getElementById('chat-box');
+    const box = $('chat-box');
     const div = document.createElement('div');
     div.className = 'msg ' + role;
     div.textContent = text;
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
+    return div;
   }
 </script>
 </body>

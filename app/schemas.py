@@ -65,6 +65,10 @@ class AnalysisResult(BaseModel):
     match_pct: float = Field(ge=0.0, le=100.0)
     keyword_coverage_pct: float = Field(ge=0.0, le=100.0)
     suggestions: list[RewrittenBullet] = []
+    timings_ms: dict[str, float] = {}
+    # Filled only by /analyze/upload so the page can reuse the parsed text for chat/suggest.
+    resume_text: Optional[str] = None
+    jd_text: Optional[str] = None
 
 
 # ── API request bodies ────────────────────────────────────────────────────────
@@ -72,6 +76,18 @@ class AnalysisResult(BaseModel):
 class AnalyzeTextRequest(BaseModel):
     resume_text: str = Field(min_length=10)
     jd_text: str = Field(min_length=10)
+    # The web page sets this to false and fetches suggestions from /suggest afterwards,
+    # so the score appears without waiting for the rewrite call.
+    include_suggestions: bool = True
+
+
+class SuggestRequest(BaseModel):
+    resume_text: str = Field(min_length=10)
+    requirements: list[Requirement] = Field(min_length=1)
+
+
+class SuggestResponse(BaseModel):
+    suggestions: list[RewrittenBullet]
 
 
 class RewriteRequest(BaseModel):
